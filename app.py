@@ -3,18 +3,18 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 # =====================================================
-# PAGE CONFIGURATION
+# PAGE CONFIG
 # =====================================================
 
 st.set_page_config(
-    page_title="HomeMind AI | Smart Energy",
+    page_title="HomeMind | Smart Energy",
     page_icon="🏠",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
 # =====================================================
-# ENERGY ASSUMPTIONS
+# SIMULATION ASSUMPTIONS
 # =====================================================
 
 LIGHT_MAX_WATTS = 10
@@ -22,15 +22,26 @@ FAN_MAX_WATTS = 50
 
 HOURS_PER_DAY = 5
 DAYS_PER_MONTH = 30
-ELECTRICITY_RATE = 8
+RATE_PER_UNIT = 8
 
 # =====================================================
-# PREMIUM UI DESIGN
+# CUSTOM DESIGN
 # =====================================================
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+    --bg: #0b1020;
+    --card: #151e34;
+    --card-light: #1b2945;
+    --text: #f5f7ff;
+    --muted: #9baac8;
+    --blue: #79aaff;
+    --violet: #a18bff;
+    --green: #71dfb0;
+}
 
 html, body, [class*="css"] {
     font-family: 'Inter', sans-serif;
@@ -38,10 +49,10 @@ html, body, [class*="css"] {
 
 .stApp {
     background:
-        radial-gradient(ellipse at 10% 0%, #202b5c 0%, transparent 35%),
-        radial-gradient(ellipse at 90% 10%, #25205b 0%, transparent 35%),
-        #090e1d;
-    color: #f4f6ff;
+        radial-gradient(ellipse at 5% 0%, #1c3158 0%, transparent 33%),
+        radial-gradient(ellipse at 95% 5%, #29204c 0%, transparent 32%),
+        var(--bg);
+    color: var(--text);
 }
 
 header[data-testid="stHeader"] {
@@ -53,157 +64,181 @@ header[data-testid="stHeader"] {
 }
 
 .block-container {
-    max-width: 1200px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    max-width: 1180px;
+    padding: 28px 24px 55px;
 }
 
-/* HERO */
+/* HEADER */
 
 .hero {
-    background: linear-gradient(115deg, #202e60, #192448 55%, #35265f);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: linear-gradient(120deg, #20365e, #1b2949 55%, #332858);
+    border: 1px solid rgba(255,255,255,.12);
     border-radius: 25px;
-    padding: 30px 32px;
+    padding: 30px;
     margin-bottom: 28px;
-    box-shadow: 0 15px 45px rgba(0,0,0,0.22);
+    box-shadow: 0 18px 45px rgba(0,0,0,.20);
 }
 
-.hero-tag {
-    color: #a9bbff;
+.eyebrow {
+    color: #b3c6ff;
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 2.5px;
+    letter-spacing: 2px;
 }
 
-.hero-title {
-    font-size: 38px;
-    font-weight: 900;
+.hero h1 {
     color: white;
-    margin: 9px 0;
+    font-size: clamp(29px, 4vw, 40px);
+    font-weight: 900;
+    margin: 9px 0 6px;
 }
 
-.hero-subtitle {
-    color: #c3cdec;
+.hero p {
+    color: #c2cce5;
     font-size: 14px;
     line-height: 1.7;
+    margin: 0;
 }
 
-/* SECTION HEADINGS */
+/* SECTION TITLES */
 
-.section-heading {
+.section-title {
+    color: white;
     font-size: 21px;
     font-weight: 800;
-    color: #ffffff;
-    margin: 25px 0 15px;
+    margin: 26px 0 6px;
 }
 
-.section-description {
-    color: #9eaccd;
+.section-subtitle {
+    color: var(--muted);
     font-size: 12px;
-    margin-top: -9px;
-    margin-bottom: 18px;
+    margin-bottom: 17px;
 }
 
-/* DEVICE CARDS */
+/* APPLIANCE CARDS */
 
-.device-card {
-    background: linear-gradient(145deg, #192443, #11192e);
-    border: 1px solid rgba(255,255,255,0.11);
-    border-radius: 23px;
-    padding: 22px 22px 10px;
-    box-shadow: 0 12px 35px rgba(0,0,0,0.2);
-    min-height: 140px;
+.appliance-card {
+    background: linear-gradient(150deg, #1a2947, #121c32);
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 24px;
+    padding: 22px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.18);
 }
 
-.device-title {
+.appliance-name {
     color: white;
     font-size: 19px;
     font-weight: 800;
 }
 
-.device-subtitle {
-    color: #9eaccd;
+.appliance-description {
+    color: #a6b5d2;
     font-size: 12px;
     margin-top: 5px;
 }
 
-.curve {
-    height: 23px;
-    width: 75%;
-    margin: 18px auto 0;
-    border-top: 4px solid #8296ff;
+/* CURVED ACCENT */
+
+.slider-arc {
+    width: 78%;
+    height: 17px;
+    margin: 23px auto 8px;
+    border-top: 4px solid #829cff;
     border-radius: 100% 100% 0 0;
-    filter: drop-shadow(0 0 8px #748aff);
+    filter: drop-shadow(0 0 7px rgba(121,151,255,.7));
 }
 
-/* SLIDERS */
+/* LARGE SLIDERS */
 
 div[data-testid="stSlider"] {
-    padding: 5px 12px 0;
+    padding: 9px 7px 3px;
 }
 
 div[data-testid="stSlider"] label {
-    color: #cbd5f0 !important;
-    font-weight: 600;
+    color: #dce5fa !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
 }
 
+/* Larger touch target */
 div[data-testid="stSlider"] [data-baseweb="slider"] {
-    height: 35px;
+    min-height: 46px !important;
+    padding: 8px 0 !important;
+    cursor: pointer;
 }
 
+/* Thicker slider track */
+div[data-testid="stSlider"] [data-baseweb="slider"] > div > div {
+    height: 12px !important;
+    border-radius: 20px !important;
+}
+
+/* Large circular handle */
 div[data-testid="stSlider"] [role="slider"] {
-    width: 24px !important;
-    height: 24px !important;
-    border: 4px solid #ffffff !important;
-    box-shadow: 0 0 13px #8398ff !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    border: 5px solid #8da7ff !important;
+    box-shadow: 0 0 0 5px rgba(130,156,255,.16),
+                0 2px 12px rgba(0,0,0,.4) !important;
+    cursor: grab !important;
 }
 
 div[data-testid="stSlider"] [data-testid="stTickBar"] {
-    display: none;
+    display: none !important;
 }
 
-/* DEVICE ILLUSTRATIONS */
+/* VALUE */
 
-.illustration-card {
-    background: linear-gradient(145deg, #192443, #11192e);
-    border: 1px solid rgba(255,255,255,0.11);
-    border-radius: 22px;
+.value-display {
+    color: #a9beff;
     text-align: center;
-    padding: 15px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
-}
-
-.device-percentage {
-    color: #a9baff;
-    font-size: 25px;
+    font-size: 27px;
     font-weight: 900;
-    margin-top: 0;
+    margin: 0 0 7px;
 }
 
-.device-status {
-    color: #a9b8d9;
+/* DEVICE VISUALS */
+
+.visual-card {
+    background: linear-gradient(145deg, #17243e, #111a2e);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 21px;
+    padding: 15px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.visual-status {
+    color: #c0cde7;
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    margin-top: 2px;
+    font-weight: 800;
+    letter-spacing: 1.6px;
+    margin-top: 3px;
 }
 
-/* METRIC CARDS */
+.visual-power {
+    color: #91a5cb;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* METRICS */
 
 .metric-card {
-    background: linear-gradient(145deg, #1a2747, #121a30);
-    border: 1px solid rgba(255,255,255,0.10);
-    border-radius: 18px;
+    background: linear-gradient(145deg, #1a2946, #121b30);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 19px;
     padding: 20px;
-    min-height: 115px;
+    min-height: 112px;
 }
 
 .metric-label {
-    color: #aab8d6;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
+    color: #a6b5d2;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
 }
 
 .metric-value {
@@ -214,26 +249,26 @@ div[data-testid="stSlider"] [data-testid="stTickBar"] {
 }
 
 .metric-caption {
-    color: #8496bb;
+    color: #8c9dbd;
     font-size: 11px;
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
-/* MONTHLY BILL */
+/* BILL */
 
 .bill-card {
-    background: linear-gradient(110deg, #304b9a, #57378e);
-    border: 1px solid rgba(255,255,255,0.17);
+    background: linear-gradient(115deg, #304d91, #543b91);
+    border: 1px solid rgba(255,255,255,.15);
     border-radius: 23px;
-    padding: 26px;
-    margin-top: 12px;
-    box-shadow: 0 12px 35px rgba(39,49,119,0.25);
+    padding: 25px;
+    margin-top: 14px;
+    box-shadow: 0 15px 40px rgba(35,46,116,.2);
 }
 
 .bill-label {
-    color: #d2dcff;
-    font-size: 12px;
-    font-weight: 700;
+    color: #d2ddff;
+    font-size: 11px;
+    font-weight: 800;
     letter-spacing: 1.2px;
 }
 
@@ -244,57 +279,95 @@ div[data-testid="stSlider"] [data-testid="stTickBar"] {
     margin: 7px 0;
 }
 
-.bill-note {
-    color: #d0d9ff;
+.bill-caption {
+    color: #d5ddff;
     font-size: 12px;
 }
 
-/* BREAKDOWN */
+/* DEVICE BREAKDOWN */
 
 .breakdown-card {
-    background: #151f39;
-    border: 1px solid rgba(255,255,255,0.09);
-    border-radius: 18px;
+    background: #17233c;
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 19px;
     padding: 20px;
+}
+
+.breakdown-heading {
+    color: white;
+    font-size: 17px;
+    font-weight: 800;
     margin-bottom: 10px;
 }
 
-.breakdown-title {
-    font-size: 17px;
-    color: white;
-    font-weight: 800;
-}
-
-.breakdown-text {
-    color: #b3c0dd;
+.breakdown-line {
+    color: #b8c5df;
     font-size: 13px;
     line-height: 2;
 }
 
-/* INFO AND FOOTER */
+/* INFO */
 
 .info-box {
-    background: #131e35;
-    border: 1px solid #2b3d65;
-    border-radius: 16px;
+    background: #131e34;
+    border: 1px solid #293b5e;
+    border-radius: 17px;
     padding: 18px;
-    color: #b9c7e6;
+    color: #b8c7e4;
     font-size: 12px;
     line-height: 1.8;
 }
 
 .footer {
     text-align: center;
-    color: #7788ae;
-    font-size: 11px;
+    color: #788bad;
+    font-size: 10px;
     letter-spacing: 1.5px;
     padding-top: 30px;
 }
 
-div[data-testid="stMarkdownContainer"] p {
-    color: #dce5ff;
-}
+/* MOBILE */
 
+@media (max-width: 640px) {
+    .block-container {
+        padding: 15px 12px 35px;
+    }
+
+    .hero {
+        padding: 23px 19px;
+        border-radius: 20px;
+    }
+
+    .appliance-card {
+        padding: 18px;
+    }
+
+    .section-title {
+        font-size: 19px;
+    }
+
+    .metric-card {
+        padding: 14px;
+        min-height: 100px;
+    }
+
+    .metric-value {
+        font-size: 21px;
+    }
+
+    .bill-value {
+        font-size: 36px;
+    }
+
+    div[data-testid="stSlider"] [data-baseweb="slider"] {
+        min-height: 54px !important;
+    }
+
+    div[data-testid="stSlider"] [role="slider"] {
+        width: 32px !important;
+        height: 32px !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -304,13 +377,13 @@ div[data-testid="stMarkdownContainer"] p {
 
 st.markdown("""
 <div class="hero">
-    <div class="hero-tag">INTELLIGENT LIVING • ENERGY INSIGHTS</div>
-    <div class="hero-title">🏠 HomeMind AI</div>
-    <div class="hero-subtitle">
-        Your smart home energy companion.<br>
-        Adjust appliances, monitor electricity consumption
-        and predict your monthly electricity bill.
-    </div>
+    <div class="eyebrow">SMART LIVING · ENERGY INTELLIGENCE</div>
+    <h1>HomeMind</h1>
+    <p>
+        A smarter way to understand your home's energy.
+        Adjust your virtual appliances and explore your
+        estimated electricity consumption.
+    </p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -319,24 +392,28 @@ st.markdown("""
 # =====================================================
 
 st.markdown(
-    '<div class="section-heading">🎛️ Smart Room Controls</div>',
+    '<div class="section-title">Your smart room</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="section-description">Move the sliders and watch your virtual room respond.</div>',
+    '<div class="section-subtitle">Adjust the controls to see your room respond in real time.</div>',
     unsafe_allow_html=True
 )
 
-light_column, fan_column = st.columns(2, gap="large")
+light_col, fan_col = st.columns(2, gap="large")
 
-with light_column:
+# ---------------- LIGHT ----------------
+
+with light_col:
 
     st.markdown("""
-    <div class="device-card">
-        <div class="device-title">💡 Smart Lighting</div>
-        <div class="device-subtitle">Adjust your room's light intensity</div>
-        <div class="curve"></div>
+    <div class="appliance-card">
+        <div class="appliance-name">💡 Lighting</div>
+        <div class="appliance-description">
+            Set the brightness of your room
+        </div>
+        <div class="slider-arc"></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -351,85 +428,88 @@ with light_column:
     )
 
     st.markdown(
-        f'<div class="device-percentage">{light}%</div>',
+        f'<div class="value-display">{light}%</div>',
         unsafe_allow_html=True
     )
 
     light_power = LIGHT_MAX_WATTS * light / 100
 
+    # Bulb brightness changes with slider
     brightness = 0.08 + (light / 100) * 0.92
-    glow = 4 + light * 0.40
+    glow = 5 + light * 0.38
 
     light_status = "LIGHT ON" if light > 0 else "LIGHT OFF"
 
     bulb_html = f"""
-    <div class="illustration-card">
-        <svg width="190" height="170" viewBox="0 0 190 170">
+    <div class="visual-card">
+        <svg width="100%" height="180" viewBox="0 0 220 180">
             <defs>
-                <radialGradient id="bulbGlow">
+                <radialGradient id="glow">
                     <stop offset="0%" stop-color="#fff4a8"
                         stop-opacity="{brightness}"/>
-                    <stop offset="100%" stop-color="#ffc94d"
+                    <stop offset="100%" stop-color="#ffcb55"
                         stop-opacity="0"/>
                 </radialGradient>
             </defs>
 
-            <circle cx="95" cy="75" r="72"
-                fill="url(#bulbGlow)"
+            <circle cx="110" cy="76" r="78"
+                fill="url(#glow)"
                 style="filter:blur(7px)"/>
 
             <g opacity="{brightness}">
-                <path d="M95 22
-                    C65 22 48 44 53 73
-                    C56 90 72 99 75 116
-                    L115 116
-                    C118 99 134 90 137 73
-                    C142 44 125 22 95 22Z"
+                <path d="
+                    M110 20
+                    C77 20 58 45 63 77
+                    C66 97 84 105 88 124
+                    L132 124
+                    C136 105 154 97 157 77
+                    C162 45 143 20 110 20Z"
                     fill="#ffe69a"
-                    stroke="#fff3c4"
+                    stroke="#fff4c6"
                     stroke-width="3"
-                    style="filter:drop-shadow(0 0 {glow}px #ffdb68)"/>
+                    style="filter:drop-shadow(0 0 {glow}px #ffdb73)"/>
 
-                <path d="M79 117 H111
-                    M81 126 H109
-                    M85 135 H105"
-                    stroke="#d5dced"
+                <path d="M91 125 H129 M94 135 H126 M99 144 H121"
+                    stroke="#d9e2f3"
                     stroke-width="5"
                     stroke-linecap="round"/>
             </g>
 
-            <path d="M95 22
-                C65 22 48 44 53 73
-                C56 90 72 99 75 116
-                L115 116
-                C118 99 134 90 137 73
-                C142 44 125 22 95 22Z"
+            <path d="
+                M110 20
+                C77 20 58 45 63 77
+                C66 97 84 105 88 124
+                L132 124
+                C136 105 154 97 157 77
+                C162 45 143 20 110 20Z"
                 fill="none"
-                stroke="#8999bc"
+                stroke="#8498bd"
                 stroke-width="2"/>
 
-            <path d="M87 145 H103"
-                stroke="#9caccb"
+            <path d="M101 154 H119"
+                stroke="#9eafd0"
                 stroke-width="5"
                 stroke-linecap="round"/>
         </svg>
 
-        <div class="device-status">{light_status}</div>
-        <div style="color:#91a4cb;font-size:11px;margin-top:7px">
-            Estimated power: {light_power:.2f} W
-        </div>
+        <div class="visual-status">{light_status}</div>
+        <div class="visual-power">Estimated power · {light_power:.2f} W</div>
     </div>
     """
 
-    components.html(bulb_html, height=225)
+    components.html(bulb_html, height=235)
 
-with fan_column:
+# ---------------- FAN ----------------
+
+with fan_col:
 
     st.markdown("""
-    <div class="device-card">
-        <div class="device-title">🌀 Smart Fan</div>
-        <div class="device-subtitle">Adjust the speed of your ceiling fan</div>
-        <div class="curve"></div>
+    <div class="appliance-card">
+        <div class="appliance-name">🌀 Ceiling Fan</div>
+        <div class="appliance-description">
+            Set your preferred fan speed
+        </div>
+        <div class="slider-arc"></div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -444,79 +524,99 @@ with fan_column:
     )
 
     st.markdown(
-        f'<div class="device-percentage">{fan}%</div>',
+        f'<div class="value-display">{fan}%</div>',
         unsafe_allow_html=True
     )
 
     fan_power = FAN_MAX_WATTS * fan / 100
 
-    # Higher slider value = faster rotation
-    duration = 3.5 - (fan / 100) * 3.35
-    duration = max(0.15, duration)
+    # Fan rotates faster as the slider increases
+    duration = max(0.15, 3.5 - (fan / 100) * 3.35)
 
     fan_status = "FAN RUNNING" if fan > 0 else "FAN STOPPED"
 
     fan_html = f"""
-    <div class="illustration-card">
-        <svg width="190" height="170" viewBox="0 0 190 170">
+    <div class="visual-card">
+        <svg width="100%" height="180" viewBox="0 0 220 180">
+
+            <!-- Three equal blades, spaced exactly 120 degrees -->
             <g style="
-                transform-origin:95px 78px;
-                animation:spin {duration:.3f}s linear infinite;
+                transform-origin:110px 78px;
+                animation:fanSpin {duration:.3f}s linear infinite;
                 animation-play-state:{'running' if fan > 0 else 'paused'};
             ">
-                <path d="M95 78
-                    C72 66 53 32 69 23
-                    C86 13 105 47 95 78Z"
-                    fill="#78aaff"
-                    stroke="#c1ddff"
-                    stroke-width="2"/>
 
-                <path d="M95 78
-                    C120 66 153 47 160 65
-                    C167 84 127 98 95 78Z"
-                    fill="#78aaff"
-                    stroke="#c1ddff"
-                    stroke-width="2"/>
+                <g transform="rotate(0 110 78)">
+                    <path d="
+                        M110 70
+                        C98 51 82 27 91 14
+                        C99 2 114 12 119 28
+                        C125 44 117 59 114 72
+                        Z"
+                        fill="#77aaff"
+                        stroke="#c3ddff"
+                        stroke-width="2"/>
+                </g>
 
-                <path d="M95 78
-                    C107 105 115 137 96 146
-                    C77 153 76 109 95 78Z"
-                    fill="#78aaff"
-                    stroke="#c1ddff"
-                    stroke-width="2"/>
+                <g transform="rotate(120 110 78)">
+                    <path d="
+                        M110 70
+                        C98 51 82 27 91 14
+                        C99 2 114 12 119 28
+                        C125 44 117 59 114 72
+                        Z"
+                        fill="#77aaff"
+                        stroke="#c3ddff"
+                        stroke-width="2"/>
+                </g>
+
+                <g transform="rotate(240 110 78)">
+                    <path d="
+                        M110 70
+                        C98 51 82 27 91 14
+                        C99 2 114 12 119 28
+                        C125 44 117 59 114 72
+                        Z"
+                        fill="#77aaff"
+                        stroke="#c3ddff"
+                        stroke-width="2"/>
+                </g>
+
             </g>
 
-            <circle cx="95" cy="78" r="11"
-                fill="#e2efff"
-                stroke="#8ebaff"
-                stroke-width="3"/>
+            <!-- Central motor hub -->
+            <circle cx="110" cy="78" r="12"
+                fill="#e5efff"
+                stroke="#8db8ff"
+                stroke-width="4"/>
 
-            <path d="M95 90 V111"
-                stroke="#8497bb"
-                stroke-width="6"
-                stroke-linecap="round"/>
-
-            <path d="M67 111 H123"
-                stroke="#a8b8d9"
+            <!-- Fan rod -->
+            <path d="M110 91 V115"
+                stroke="#91a6cb"
                 stroke-width="7"
                 stroke-linecap="round"/>
+
+            <!-- Ceiling mount -->
+            <path d="M79 116 H141"
+                stroke="#aebfe0"
+                stroke-width="8"
+                stroke-linecap="round"/>
+
         </svg>
 
         <style>
-            @keyframes spin {{
+            @keyframes fanSpin {{
                 from {{ transform: rotate(0deg); }}
                 to {{ transform: rotate(360deg); }}
             }}
         </style>
 
-        <div class="device-status">{fan_status}</div>
-        <div style="color:#91a4cb;font-size:11px;margin-top:7px">
-            Estimated power: {fan_power:.2f} W
-        </div>
+        <div class="visual-status">{fan_status}</div>
+        <div class="visual-power">Estimated power · {fan_power:.2f} W</div>
     </div>
     """
 
-    components.html(fan_html, height=225)
+    components.html(fan_html, height=235)
 
 # =====================================================
 # ENERGY CALCULATIONS
@@ -524,30 +624,26 @@ with fan_column:
 
 total_power = light_power + fan_power
 
-daily_energy = (
-    total_power * HOURS_PER_DAY
-) / 1000
-
+daily_energy = total_power * HOURS_PER_DAY / 1000
 monthly_energy = daily_energy * DAYS_PER_MONTH
 
-daily_cost = daily_energy * ELECTRICITY_RATE
+daily_cost = daily_energy * RATE_PER_UNIT
+monthly_cost = monthly_energy * RATE_PER_UNIT
 
-monthly_cost = monthly_energy * ELECTRICITY_RATE
-
-light_monthly = (
-    light_power * HOURS_PER_DAY * DAYS_PER_MONTH
-) / 1000
-
-fan_monthly = (
-    fan_power * HOURS_PER_DAY * DAYS_PER_MONTH
-) / 1000
+light_monthly = light_power * HOURS_PER_DAY * DAYS_PER_MONTH / 1000
+fan_monthly = fan_power * HOURS_PER_DAY * DAYS_PER_MONTH / 1000
 
 # =====================================================
-# LIVE ENERGY DASHBOARD
+# LIVE OVERVIEW
 # =====================================================
 
 st.markdown(
-    '<div class="section-heading">⚡ Live Energy Overview</div>',
+    '<div class="section-title">Energy overview</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="section-subtitle">Your estimated electricity usage based on current settings.</div>',
     unsafe_allow_html=True
 )
 
@@ -556,8 +652,8 @@ c1, c2, c3 = st.columns(3, gap="medium")
 with c1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">CURRENT POWER LOAD</div>
-        <div class="metric-value">{total_power:.2f} W</div>
+        <div class="metric-label">CURRENT POWER</div>
+        <div class="metric-value">{total_power:.1f} W</div>
         <div class="metric-caption">Combined appliance load</div>
     </div>
     """, unsafe_allow_html=True)
@@ -565,37 +661,37 @@ with c1:
 with c2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">DAILY CONSUMPTION</div>
+        <div class="metric-label">DAILY ENERGY</div>
         <div class="metric-value">{daily_energy:.3f}</div>
-        <div class="metric-caption">Units per day (kWh)</div>
+        <div class="metric-caption">kWh per day</div>
     </div>
     """, unsafe_allow_html=True)
 
 with c3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">DAILY ELECTRICITY COST</div>
+        <div class="metric-label">DAILY COST</div>
         <div class="metric-value">₹{daily_cost:.2f}</div>
-        <div class="metric-caption">At ₹{ELECTRICITY_RATE}/unit</div>
+        <div class="metric-caption">Estimated daily expense</div>
     </div>
     """, unsafe_allow_html=True)
 
 # =====================================================
-# MONTHLY PREDICTION
+# MONTHLY BILL
 # =====================================================
 
 st.markdown(
-    '<div class="section-heading">📊 Monthly Cost Prediction</div>',
+    '<div class="section-title">Monthly bill prediction</div>',
     unsafe_allow_html=True
 )
 
 st.markdown(f"""
 <div class="bill-card">
-    <div class="bill-label">PREDICTED MONTHLY ELECTRICITY BILL</div>
+    <div class="bill-label">ESTIMATED MONTHLY ELECTRICITY COST</div>
     <div class="bill-value">₹{monthly_cost:.2f}</div>
-    <div class="bill-note">
-        Estimated monthly consumption: {monthly_energy:.2f} kWh
-        &nbsp; • &nbsp; 30-day projection
+    <div class="bill-caption">
+        {monthly_energy:.2f} kWh monthly consumption
+        &nbsp; · &nbsp; 30-day estimate
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -605,7 +701,7 @@ st.markdown(f"""
 # =====================================================
 
 st.markdown(
-    '<div class="section-heading">🔍 Appliance Breakdown</div>',
+    '<div class="section-title">Appliance breakdown</div>',
     unsafe_allow_html=True
 )
 
@@ -614,65 +710,56 @@ a, b = st.columns(2, gap="large")
 with a:
     st.markdown(f"""
     <div class="breakdown-card">
-        <div class="breakdown-title">💡 Lighting</div>
-        <div class="breakdown-text">
+        <div class="breakdown-heading">💡 Lighting</div>
+        <div class="breakdown-line">
             Intensity: <b>{light}%</b><br>
             Current power: <b>{light_power:.2f} W</b><br>
-            Monthly consumption: <b>{light_monthly:.2f} kWh</b><br>
-            Monthly cost: <b>₹{light_monthly * ELECTRICITY_RATE:.2f}</b>
+            Monthly usage: <b>{light_monthly:.2f} kWh</b><br>
+            Monthly cost: <b>₹{light_monthly * RATE_PER_UNIT:.2f}</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-    st.progress(light / 100, text="Light intensity")
 
 with b:
     st.markdown(f"""
     <div class="breakdown-card">
-        <div class="breakdown-title">🌀 Fan</div>
-        <div class="breakdown-text">
+        <div class="breakdown-heading">🌀 Ceiling Fan</div>
+        <div class="breakdown-line">
             Speed: <b>{fan}%</b><br>
             Current power: <b>{fan_power:.2f} W</b><br>
-            Monthly consumption: <b>{fan_monthly:.2f} kWh</b><br>
-            Monthly cost: <b>₹{fan_monthly * ELECTRICITY_RATE:.2f}</b>
+            Monthly usage: <b>{fan_monthly:.2f} kWh</b><br>
+            Monthly cost: <b>₹{fan_monthly * RATE_PER_UNIT:.2f}</b>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.progress(fan / 100, text="Fan speed")
-
 # =====================================================
-# ENERGY CHART
+# ASSUMPTIONS
 # =====================================================
 
 st.markdown(
-    '<div class="section-heading">📈 Monthly Energy Distribution</div>',
+    '<div class="section-title">How we calculate</div>',
     unsafe_allow_html=True
 )
 
-st.bar_chart({
-    "Light (kWh)": [light_monthly],
-    "Fan (kWh)": [fan_monthly]
-})
-
-# =====================================================
-# INFORMATION
-# =====================================================
-
 st.markdown(f"""
 <div class="info-box">
-    <b>ℹ️ About this prediction</b><br><br>
+    <b>Simulation assumptions</b><br>
     • Light rating: {LIGHT_MAX_WATTS} W at 100% intensity.<br>
     • Fan rating: {FAN_MAX_WATTS} W at 100% speed.<br>
-    • Assumed daily operation: {HOURS_PER_DAY} hours.<br>
-    • Monthly period: {DAYS_PER_MONTH} days.<br>
-    • Electricity tariff: ₹{ELECTRICITY_RATE} per unit.<br><br>
-    These are illustrative estimates using a simplified linear
-    power model. Real fan power does not necessarily change
-    linearly with its speed. Actual electricity consumption
-    depends on the appliance and its operating conditions.
-    The sliders and illustrations are simulations and do not
-    control or measure the physical Arduino model.
+    • Daily usage: {HOURS_PER_DAY} hours.<br>
+    • Billing period: {DAYS_PER_MONTH} days.<br>
+    • Electricity tariff: ₹{RATE_PER_UNIT} per unit.<br><br>
+
+    <b>Calculation:</b><br>
+    Energy (kWh) = Power (W) × Hours ÷ 1000<br>
+    Monthly cost = Monthly energy × Electricity tariff<br><br>
+
+    These are illustrative estimates using a simplified
+    linear power model. Actual fan power does not necessarily
+    change linearly with speed. The sliders and illustrations
+    are simulations and do not control or measure your physical
+    Arduino model.
 </div>
 """, unsafe_allow_html=True)
 
@@ -682,6 +769,6 @@ st.markdown(f"""
 
 st.markdown("""
 <div class="footer">
-    HOMEMIND AI &nbsp; • &nbsp; SMARTER ENERGY &nbsp; • &nbsp; SMARTER LIVING
+    HOMEMIND · SMARTER ENERGY · SMARTER LIVING
 </div>
 """, unsafe_allow_html=True)
