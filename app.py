@@ -840,8 +840,8 @@ body {
 
 <script>
 (function () {
-    const LIGHT_WATTS = 10;
-    const FAN_WATTS = 50;
+    const LIGHT_WATTS = 20;
+    const FAN_WATTS = 90;
     const HOURS_PER_DAY = 5;
     const DAYS_PER_MONTH = 30;
     const RATE = 8;
