@@ -2,639 +2,1020 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
-# --------------------------------------------------
-# PAGE CONFIGURATION
-# --------------------------------------------------
-
 st.set_page_config(
-    page_title="HomeMind AI | Smart Home Dashboard",
+    page_title="HomeMind AI | Smart Living",
     page_icon="🏠",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# --------------------------------------------------
-# POWER AND BILLING ASSUMPTIONS
-# --------------------------------------------------
+# All live controls, animations and calculations run inside
+# this HTML/JavaScript dashboard. No paid API is required.
 
-LIGHT_MAX_WATTS = 10
-FAN_MAX_WATTS = 50
-HOURS_PER_DAY = 5
-DAYS_PER_MONTH = 30
-RATE_PER_UNIT = 8
+dashboard = r"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-# --------------------------------------------------
-# CUSTOM CSS
-# --------------------------------------------------
-
-st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --blue: #5278F5;
-    --purple: #8A63F6;
-    --ink: #17213B;
-    --muted: #77819A;
-    --surface: #FFFFFF;
-    --background: #F5F7FC;
+    --bg: #090D18;
+    --panel: #111827;
+    --panel2: #151E30;
+    --border: rgba(255,255,255,.075);
+    --white: #F6F7FB;
+    --muted: #8993A8;
+    --yellow: #FFD66B;
+    --blue: #7895FF;
+    --green: #62D6A5;
 }
 
-html, body, [class*="css"] {
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--white);
     font-family: 'DM Sans', sans-serif;
 }
 
-.stApp {
-    background: var(--background);
-}
-
-.block-container {
+.dashboard {
+    width: 100%;
     max-width: 1250px;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
+    margin: auto;
+    padding: 24px 22px 38px;
 }
 
-header, footer {
-    visibility: hidden;
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
-#MainMenu {
-    visibility: hidden;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 13px;
 }
 
-h1, h2, h3 {
-    font-family: 'Outfit', sans-serif !important;
-    color: var(--ink);
+.brand-icon {
+    width: 47px;
+    height: 47px;
+    border-radius: 15px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg,#26395E,#18243E);
+    border: 1px solid rgba(255,255,255,.1);
+    font-size: 23px;
+}
+
+.brand-name {
+    font-family: Outfit,sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+}
+
+.brand-sub {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+    letter-spacing: 1.4px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #121C2C;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    padding: 10px 15px;
+    color: #B9C5D9;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
 }
 
 .hero {
-    background: linear-gradient(120deg, #233B79 0%, #526FE0 58%, #8462E9 100%);
-    border-radius: 26px;
-    padding: 32px 36px;
-    color: white;
-    margin-bottom: 25px;
-    box-shadow: 0 15px 40px rgba(57, 78, 160, 0.16);
-}
-
-.hero h1 {
-    color: white !important;
-    font-size: 36px;
-    margin: 0;
-    font-weight: 800;
-}
-
-.hero p {
-    color: rgba(255,255,255,.82);
-    margin-top: 8px;
-    font-size: 15px;
+    position: relative;
+    overflow: hidden;
+    padding: 30px;
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 85% 15%,rgba(255,214,107,.12),transparent 30%),
+        linear-gradient(115deg,#17233B,#101827 70%);
+    border: 1px solid var(--border);
+    margin-bottom: 26px;
 }
 
 .hero-tag {
-    display: inline-block;
-    padding: 7px 13px;
-    background: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 30px;
-    font-size: 12px;
-    margin-bottom: 14px;
+    color: var(--yellow);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
 }
 
-.section-heading {
-    font-family: 'Outfit', sans-serif;
-    font-size: 22px;
+.hero h1 {
+    font-family: Outfit,sans-serif;
+    font-size: clamp(27px,4vw,39px);
+    line-height: 1.12;
+    margin: 0;
+    letter-spacing: -.8px;
+}
+
+.hero p {
+    color: #A9B4C8;
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 540px;
+    margin: 12px 0 0;
+}
+
+.section-title {
+    font-family: Outfit,sans-serif;
+    font-size: 20px;
     font-weight: 700;
-    color: var(--ink);
-    margin: 22px 0 14px 0;
+    margin: 28px 0 14px;
 }
 
-.panel {
-    background: white;
-    border: 1px solid #E9ECF5;
-    border-radius: 22px;
-    padding: 23px;
-    box-shadow: 0 7px 25px rgba(31, 48, 92, .045);
+.section-desc {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: -8px;
     margin-bottom: 16px;
 }
 
-.metric-label {
-    color: #77819A;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 7px;
+.devices {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 17px;
 }
 
-.metric-value {
-    font-family: 'Outfit', sans-serif;
-    font-size: 30px;
-    font-weight: 800;
-    color: #17213B;
+.card {
+    background: linear-gradient(145deg,#141D2E,#101725);
+    border: 1px solid var(--border);
+    border-radius: 23px;
+    padding: 23px;
+    min-width: 0;
+    box-shadow: 0 12px 35px rgba(0,0,0,.12);
 }
 
-.metric-note {
-    color: #8A93A8;
-    font-size: 12px;
-    margin-top: 5px;
+.device-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .device-title {
-    font-family: 'Outfit', sans-serif;
+    font-family: Outfit,sans-serif;
+    font-size: 19px;
     font-weight: 700;
-    font-size: 18px;
-    color: #17213B;
 }
 
 .device-subtitle {
     font-size: 12px;
-    color: #8A93A8;
+    color: var(--muted);
+    margin-top: 5px;
 }
 
-.power-pill {
-    display: inline-block;
-    background: #EEF2FF;
-    color: #4F6FE8;
-    padding: 7px 12px;
+.state {
+    color: #8D98AD;
+    background: #202A3C;
+    padding: 7px 11px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.state.active {
+    color: var(--green);
+    background: rgba(98,214,165,.1);
+}
+
+.visual {
+    height: 205px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin: 8px 0 3px;
+}
+
+.bulb-glow {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: radial-gradient(circle,rgba(255,214,107,.28),transparent 70%);
+    opacity: .7;
+    transition: opacity .08s linear;
+    pointer-events: none;
+}
+
+.bulb-svg {
+    position: relative;
+    z-index: 1;
+    width: 125px;
+    height: 160px;
+    overflow: visible;
+    filter: drop-shadow(0 0 0 transparent);
+    transition: filter .08s linear;
+}
+
+.fan-svg {
+    width: 190px;
+    height: 175px;
+    overflow: visible;
+}
+
+.fan-rotor {
+    transform-origin: 100px 87px;
+    animation: spin 1.5s linear infinite;
+    animation-play-state: paused;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 55px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: #202B3D;
+    color: white;
+    cursor: pointer;
+    font-family: 'DM Sans',sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    transition: .2s ease;
+    margin-top: 8px;
+}
+
+.icon-button.on {
+    background: linear-gradient(110deg,#554A2D,#3D3627);
+    border-color: rgba(255,214,107,.35);
+    color: var(--yellow);
+}
+
+.icon-button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.15);
+}
+
+.icon-button:active {
+    transform: scale(.985);
+}
+
+.switch-symbol {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1.5px solid currentColor;
+    font-size: 13px;
+}
+
+.control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 23px;
+    margin-bottom: 11px;
+}
+
+.control-label {
+    font-size: 13px;
     font-weight: 700;
+    color: #DDE3EF;
 }
 
-.note {
-    color: #7D879D;
+.control-value {
+    color: var(--yellow);
+    font-family: Outfit,sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.range {
+    appearance: none;
+    width: 100%;
+    height: 11px;
+    border-radius: 20px;
+    outline: none;
+    cursor: pointer;
+    margin: 8px 0 4px;
+    background: #303A4D;
+    touch-action: pan-y;
+}
+
+.range::-webkit-slider-thumb {
+    appearance: none;
+    width: 27px;
+    height: 27px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 5px solid #FFF3D1;
+    box-shadow: 0 0 0 5px rgba(255,214,107,.12),0 2px 12px rgba(0,0,0,.4);
+    cursor: grab;
+}
+
+.range::-moz-range-thumb {
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 5px solid #FFF3D1;
+    box-shadow: 0 0 0 5px rgba(255,214,107,.12);
+    cursor: grab;
+}
+
+.range:disabled {
+    opacity: .3;
+    cursor: not-allowed;
+}
+
+.range:disabled::-webkit-slider-thumb {
+    cursor: not-allowed;
+}
+
+.range-help {
+    display: flex;
+    justify-content: space-between;
+    color: #727F95;
+    font-size: 10px;
+    margin-top: 8px;
+}
+
+.power-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+    margin-top: 17px;
+    color: var(--muted);
     font-size: 12px;
-    line-height: 1.6;
 }
 
-hr {
-    border-color: #E9ECF5 !important;
+.power-line strong {
+    color: white;
+    font-size: 14px;
 }
 
-/* Larger native Streamlit slider track and handle */
-div[data-testid="stSlider"] {
-    padding-top: 8px;
-    padding-bottom: 8px;
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 15px;
 }
 
-div[data-testid="stSlider"] [data-baseweb="slider"] {
-    min-height: 48px !important;
-    padding: 10px 0 !important;
+.metric {
+    background: linear-gradient(145deg,#151F30,#101725);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 21px;
+    min-width: 0;
 }
 
-div[data-testid="stSlider"] [data-baseweb="slider"] > div > div {
-    height: 12px !important;
-    border-radius: 20px !important;
+.metric-label {
+    color: #98A3B8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .7px;
 }
 
-div[data-testid="stSlider"] [role="slider"] {
-    width: 29px !important;
-    height: 29px !important;
-    border: 4px solid white !important;
-    box-shadow: 0 2px 10px rgba(50,70,130,.25) !important;
+.metric-value {
+    font-family: Outfit,sans-serif;
+    font-size: clamp(22px,3vw,31px);
+    font-weight: 800;
+    margin-top: 10px;
+    letter-spacing: -.5px;
+    color: white;
+    overflow-wrap: anywhere;
 }
 
-div[data-testid="stSlider"] label {
-    font-weight: 700 !important;
-    color: #35415E !important;
-    font-size: 14px !important;
+.metric-value.yellow {
+    color: var(--yellow);
 }
 
-/* Large toggle switches */
-div[data-testid="stToggle"] {
-    padding: 8px 0 12px 0;
+.metric-note {
+    color: #7E8AA0;
+    font-size: 11px;
+    margin-top: 6px;
 }
 
-div[data-testid="stToggle"] label {
-    font-size: 16px !important;
-    font-weight: 800 !important;
-    color: #253251 !important;
-    gap: 13px !important;
+.breakdown {
+    display: grid;
+    grid-template-columns: repeat(2,minmax(0,1fr));
+    gap: 15px;
 }
 
-div[data-testid="stToggle"] [role="switch"] {
-    transform: scale(1.35);
-    transform-origin: left center;
-    margin-right: 10px;
+.break-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 15px 0;
+    font-size: 12px;
 }
 
-div[data-testid="stToggle"] [role="switch"] > div {
-    border-radius: 30px !important;
+.break-row span:first-child {
+    color: #A1ACC0;
 }
 
-div[data-testid="stToggle"] [role="switch"][aria-checked="true"] {
-    background: #5578F4 !important;
-    border-color: #5578F4 !important;
+.break-row strong {
+    color: white;
 }
 
-div[data-testid="stToggle"] [role="switch"][aria-checked="false"] {
-    background: #C7CDDA !important;
-    border-color: #C7CDDA !important;
+.bar {
+    width: 100%;
+    height: 7px;
+    background: #2A3447;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-top: 10px;
 }
 
-@media(max-width: 640px) {
-    .block-container {
-        padding: 1rem 0.8rem 2rem 0.8rem;
+.bar-fill {
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(90deg,#E9B84E,#FFE08B);
+    width: 0%;
+    transition: width .08s linear;
+}
+
+.assumption-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    margin-bottom: 15px;
+}
+
+.assumption {
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: #202A3C;
+    border: 1px solid var(--border);
+    color: #DCE3EF;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.notice {
+    color: #8390A6;
+    font-size: 11px;
+    line-height: 1.7;
+}
+
+.footer {
+    text-align: center;
+    padding: 30px 10px 5px;
+    color: #68758B;
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.disabled-visual {
+    opacity: .35;
+}
+
+@media(max-width:700px) {
+    .dashboard {
+        padding: 16px 12px 28px;
     }
 
     .hero {
         padding: 24px 20px;
-        border-radius: 20px;
+        border-radius: 19px;
     }
 
-    .hero h1 {
-        font-size: 29px;
+    .devices {
+        grid-template-columns: 1fr;
     }
 
-    .panel {
-        padding: 18px;
-        border-radius: 18px;
+    .metrics {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .metric {
+        padding: 17px;
     }
 
     .metric-value {
-        font-size: 25px;
+        font-size: 27px;
     }
 
-    div[data-testid="stSlider"] [data-baseweb="slider"] {
-        min-height: 56px !important;
+    .breakdown {
+        grid-template-columns: 1fr;
     }
 
-    div[data-testid="stSlider"] [role="slider"] {
-        width: 33px !important;
-        height: 33px !important;
+    .card {
+        padding: 19px;
     }
 
-    div[data-testid="stToggle"] [role="switch"] {
-        transform: scale(1.5);
+    .visual {
+        height: 185px;
+    }
+
+    .brand-name {
+        font-size: 19px;
+    }
+
+    .status {
+        padding: 9px 10px;
+        font-size: 10px;
+    }
+
+    .range {
+        height: 13px;
+        margin: 12px 0 8px;
+    }
+
+    .range::-webkit-slider-thumb {
+        width: 31px;
+        height: 31px;
     }
 }
 </style>
-""", unsafe_allow_html=True)
+</head>
 
-# --------------------------------------------------
-# SESSION STATE
-# --------------------------------------------------
+<body>
+<div class="dashboard">
 
-if "light_on" not in st.session_state:
-    st.session_state.light_on = True
-
-if "fan_on" not in st.session_state:
-    st.session_state.fan_on = True
-
-# --------------------------------------------------
-# HEADER
-# --------------------------------------------------
-
-st.markdown("""
-<div class="hero">
-    <div class="hero-tag">✦ SMART LIVING SIMULATOR</div>
-    <h1>HomeMind AI</h1>
-    <p>Control your home environment and understand your electricity consumption in real time.</p>
-</div>
-""", unsafe_allow_html=True)
-
-# --------------------------------------------------
-# DEVICE CONTROL SECTION
-# --------------------------------------------------
-
-st.markdown('<div class="section-heading">Your Home Controls</div>',
-            unsafe_allow_html=True)
-
-col_light, col_fan = st.columns(2, gap="large")
-
-with col_light:
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="device-title">💡 Smart Lighting</div>
-    <div class="device-subtitle">Brightness and power management</div>
-    """, unsafe_allow_html=True)
-
-    light_on = st.toggle(
-        "LIGHT POWER",
-        key="light_on"
-    )
-
-    light = st.slider(
-        "Brightness",
-        min_value=0,
-        max_value=100,
-        value=70,
-        step=1,
-        format="%d",
-        disabled=not light_on,
-        key="light_brightness"
-    )
-
-    st.markdown(
-        f'<div class="power-pill">{"● LIGHT ON" if light_on else "○ LIGHT OFF"}</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col_fan:
-    st.markdown('<div class="panel">', unsafe_allow_html=True)
-
-    st.markdown("""
-    <div class="device-title">🌀 Smart Ceiling Fan</div>
-    <div class="device-subtitle">Fan speed and power management</div>
-    """, unsafe_allow_html=True)
-
-    fan_on = st.toggle(
-        "FAN POWER",
-        key="fan_on"
-    )
-
-    fan = st.slider(
-        "Fan speed",
-        min_value=0,
-        max_value=100,
-        value=60,
-        step=1,
-        format="%d",
-        disabled=not fan_on,
-        key="fan_speed"
-    )
-
-    st.markdown(
-        f'<div class="power-pill">{"● FAN ON" if fan_on else "○ FAN OFF"}</div>',
-        unsafe_allow_html=True
-    )
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --------------------------------------------------
-# LIVE POWER CALCULATIONS
-# --------------------------------------------------
-
-light_power = LIGHT_MAX_WATTS * light / 100 if light_on else 0
-fan_power = FAN_MAX_WATTS * fan / 100 if fan_on else 0
-
-total_power = light_power + fan_power
-
-daily_energy = total_power * HOURS_PER_DAY / 1000
-monthly_energy = daily_energy * DAYS_PER_MONTH
-monthly_cost = monthly_energy * RATE_PER_UNIT
-
-# --------------------------------------------------
-# ANIMATED APPLIANCE PREVIEW
-# --------------------------------------------------
-
-st.markdown('<div class="section-heading">Live Appliance Preview</div>',
-            unsafe_allow_html=True)
-
-visual_col1, visual_col2 = st.columns(2, gap="large")
-
-# Bulb preview
-with visual_col1:
-    bulb_glow = light / 100 if light_on else 0
-    bulb_opacity = 0.12 + 0.88 * bulb_glow
-
-    bulb_html = f"""
-    <div style="
-        background:white;
-        border:1px solid #E9ECF5;
-        border-radius:22px;
-        padding:22px;
-        text-align:center;
-        box-shadow:0 7px 25px rgba(31,48,92,.045);
-    ">
-        <div style="font-family:Outfit,sans-serif;font-size:17px;
-        font-weight:700;color:#17213B;">Lighting Preview</div>
-
-        <div style="height:190px;display:flex;align-items:center;
-        justify-content:center;position:relative;">
-            <div style="
-                position:absolute;
-                width:130px;height:130px;border-radius:50%;
-                background:radial-gradient(circle,
-                rgba(255,193,65,{bulb_glow * 0.55}),
-                rgba(255,193,65,0));
-                filter:blur(12px);
-            "></div>
-
-            <svg width="125" height="155" viewBox="0 0 125 155">
-                <path d="M62 15 C28 15 16 40 24 66
-                C28 82 43 91 45 108 L79 108
-                C81 91 96 82 100 66
-                C108 40 96 15 62 15Z"
-                fill="#FFD46A"
-                fill-opacity="{bulb_opacity}"
-                stroke="#D59B35"
-                stroke-width="3"/>
-
-                <path d="M45 110 L79 110 M46 119 L78 119
-                M49 128 L75 128"
-                stroke="#8791A6" stroke-width="5"
-                stroke-linecap="round"/>
-
-                <path d="M53 135 L71 135"
-                stroke="#8791A6" stroke-width="5"
-                stroke-linecap="round"/>
-            </svg>
+    <header class="header">
+        <div class="brand">
+            <div class="brand-icon">⌂</div>
+            <div>
+                <div class="brand-name">HomeMind <span style="color:#FFD66B">AI</span></div>
+                <div class="brand-sub">SMART LIVING SYSTEM</div>
+            </div>
         </div>
 
-        <div style="font-size:14px;font-weight:700;
-        color:{'#278A62' if light_on else '#9AA3B5'};">
-            {"● ON" if light_on else "○ OFF"}
+        <div class="status">
+            <span class="status-dot"></span>
+            SIMULATION ACTIVE
         </div>
-        <div style="font-size:12px;color:#8791A6;margin-top:5px;">
-            {light if light_on else 0}% brightness
-        </div>
+    </header>
+
+    <section class="hero">
+        <div class="hero-tag">✦ YOUR SMART HOME</div>
+        <h1>Control your space.<br>Understand your energy.</h1>
+        <p>
+            A smarter way to manage everyday appliances.
+            Adjust your settings and watch your energy estimates
+            respond instantly.
+        </p>
+    </section>
+
+    <div class="section-title">Appliance Control</div>
+    <div class="section-desc">
+        Tap an appliance icon to switch it on or off.
     </div>
-    """
 
-    components.html(bulb_html, height=290)
+    <section class="devices">
 
-# Fan preview
-with visual_col2:
-    fan_duration = max(0.35, 4 - (fan / 100 * 3.5)) if fan_on else 0
-    fan_animation = (
-        f"animation: fanSpin {fan_duration}s linear infinite;"
-        if fan_on and fan > 0 else ""
-    )
+        <!-- LIGHT CARD -->
 
-    fan_html = f"""
-    <div style="
-        background:white;
-        border:1px solid #E9ECF5;
-        border-radius:22px;
-        padding:22px;
-        text-align:center;
-        box-shadow:0 7px 25px rgba(31,48,92,.045);
-    ">
-        <div style="font-family:Outfit,sans-serif;font-size:17px;
-        font-weight:700;color:#17213B;">Fan Preview</div>
+        <div class="card">
+            <div class="device-head">
+                <div>
+                    <div class="device-title">Smart Lighting</div>
+                    <div class="device-subtitle">Ambient brightness control</div>
+                </div>
+                <div class="state active" id="lightState">● ON</div>
+            </div>
 
-        <div style="height:190px;display:flex;align-items:center;
-        justify-content:center;">
-            <svg width="190" height="170" viewBox="0 0 190 170">
-                <defs>
-                    <linearGradient id="blade" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#91A8FF"/>
-                        <stop offset="100%" stop-color="#526FE0"/>
-                    </linearGradient>
-                </defs>
+            <div class="visual" id="bulbVisual">
+                <div class="bulb-glow" id="bulbGlow"></div>
 
-                <g style="{fan_animation}transform-origin:95px 85px;">
-                    <g fill="url(#blade)" opacity="{1 if fan_on else 0.35}">
-                        <path d="M95 85 C82 65 73 35 91 10
-                        C103 -2 116 12 112 34
-                        C108 56 102 73 95 85Z"/>
-                        <path d="M95 85 C82 65 73 35 91 10
-                        C103 -2 116 12 112 34
-                        C108 56 102 73 95 85Z"
-                        transform="rotate(120 95 85)"/>
-                        <path d="M95 85 C82 65 73 35 91 10
-                        C103 -2 116 12 112 34
-                        C108 56 102 73 95 85Z"
-                        transform="rotate(240 95 85)"/>
+                <svg class="bulb-svg" id="bulbSvg" viewBox="0 0 125 160">
+                    <defs>
+                        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FFF1B6"/>
+                            <stop offset="100%" stop-color="#E6A92F"/>
+                        </linearGradient>
+                    </defs>
+
+                    <path id="bulbGlass"
+                        d="M62 12 C29 12 15 38 23 67
+                        C27 83 42 94 46 112
+                        L78 112 C82 94 97 83 101 67
+                        C109 38 95 12 62 12Z"
+                        fill="url(#glass)"
+                        stroke="#FFD66B"
+                        stroke-width="3"/>
+
+                    <path d="M47 116 L77 116 M48 124 L76 124
+                    M51 132 L73 132 M55 140 L69 140"
+                        stroke="#B6C0D1"
+                        stroke-width="5"
+                        stroke-linecap="round"/>
+
+                    <path d="M53 145 L71 145"
+                        stroke="#7C879B"
+                        stroke-width="4"
+                        stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <button class="icon-button on" id="lightToggle" type="button"
+                aria-label="Turn light off">
+                <span class="switch-symbol" id="lightSymbol">✓</span>
+                <span id="lightButtonText">LIGHT IS ON · TAP TO TURN OFF</span>
+            </button>
+
+            <div class="control-row">
+                <span class="control-label">Brightness</span>
+                <span class="control-value" id="lightValue">70%</span>
+            </div>
+
+            <input class="range" id="lightSlider" type="range"
+                min="0" max="100" value="70">
+
+            <div class="range-help">
+                <span>DIM</span>
+                <span>BRIGHT</span>
+            </div>
+
+            <div class="power-line">
+                <span>Current power consumption</span>
+                <strong id="lightWatts">7.0 W</strong>
+            </div>
+        </div>
+
+        <!-- FAN CARD -->
+
+        <div class="card">
+            <div class="device-head">
+                <div>
+                    <div class="device-title">Smart Ceiling Fan</div>
+                    <div class="device-subtitle">Adjustable speed control</div>
+                </div>
+                <div class="state active" id="fanState">● ON</div>
+            </div>
+
+            <div class="visual" id="fanVisual">
+                <svg class="fan-svg" viewBox="0 0 200 175">
+                    <defs>
+                        <linearGradient id="bladeGradient" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#FFF0BB"/>
+                            <stop offset="100%" stop-color="#B5C8FF"/>
+                        </linearGradient>
+                    </defs>
+
+                    <g id="fanRotor" class="fan-rotor">
+                        <g fill="url(#bladeGradient)">
+                            <path d="M100 87 C85 66 76 38 91 12
+                            C99 -2 114 3 117 20
+                            C121 44 108 72 100 87Z"/>
+
+                            <path d="M100 87 C85 66 76 38 91 12
+                            C99 -2 114 3 117 20
+                            C121 44 108 72 100 87Z"
+                            transform="rotate(120 100 87)"/>
+
+                            <path d="M100 87 C85 66 76 38 91 12
+                            C99 -2 114 3 117 20
+                            C121 44 108 72 100 87Z"
+                            transform="rotate(240 100 87)"/>
+                        </g>
+
+                        <circle cx="100" cy="87" r="13"
+                            fill="#263A61" stroke="#E7EDFF" stroke-width="3"/>
+                        <circle cx="100" cy="87" r="4" fill="#FFD66B"/>
                     </g>
-                    <circle cx="95" cy="85" r="12"
-                    fill="#344D9D" stroke="white" stroke-width="3"/>
-                </g>
-            </svg>
+                </svg>
+            </div>
+
+            <button class="icon-button on" id="fanToggle" type="button"
+                aria-label="Turn fan off">
+                <span class="switch-symbol" id="fanSymbol">✓</span>
+                <span id="fanButtonText">FAN IS ON · TAP TO TURN OFF</span>
+            </button>
+
+            <div class="control-row">
+                <span class="control-label">Fan speed</span>
+                <span class="control-value" id="fanValue">60%</span>
+            </div>
+
+            <input class="range" id="fanSlider" type="range"
+                min="0" max="100" value="60">
+
+            <div class="range-help">
+                <span>SLOW</span>
+                <span>FAST</span>
+            </div>
+
+            <div class="power-line">
+                <span>Current power consumption</span>
+                <strong id="fanWatts">30.0 W</strong>
+            </div>
         </div>
 
-        <style>
-            @keyframes fanSpin {{
-                from {{ transform: rotate(0deg); }}
-                to {{ transform: rotate(360deg); }}
-            }}
-        </style>
+    </section>
 
-        <div style="font-size:14px;font-weight:700;
-        color:{'#278A62' if fan_on else '#9AA3B5'};">
-            {"● ON" if fan_on else "○ OFF"}
-        </div>
-        <div style="font-size:12px;color:#8791A6;margin-top:5px;">
-            {fan if fan_on else 0}% speed
-        </div>
+    <!-- ENERGY METRICS -->
+
+    <div class="section-title">Energy Dashboard</div>
+    <div class="section-desc">
+        Estimates update instantly as you adjust the appliances.
     </div>
-    """
 
-    components.html(fan_html, height=290)
-
-# --------------------------------------------------
-# ENERGY DASHBOARD
-# --------------------------------------------------
-
-st.markdown('<div class="section-heading">Energy & Cost Dashboard</div>',
-            unsafe_allow_html=True)
-
-m1, m2, m3 = st.columns(3, gap="medium")
-
-with m1:
-    st.markdown(f"""
-    <div class="panel">
-        <div class="metric-label">LIVE POWER</div>
-        <div class="metric-value">{total_power:.1f} W</div>
-        <div class="metric-note">Current estimated load</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with m2:
-    st.markdown(f"""
-    <div class="panel">
-        <div class="metric-label">MONTHLY ENERGY</div>
-        <div class="metric-value">{monthly_energy:.2f}</div>
-        <div class="metric-note">Kilowatt-hours (units)</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with m3:
-    st.markdown(f"""
-    <div class="panel">
-        <div class="metric-label">PREDICTED MONTHLY BILL</div>
-        <div class="metric-value">₹{monthly_cost:.2f}</div>
-        <div class="metric-note">Estimated electricity cost</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# --------------------------------------------------
-# APPLIANCE BREAKDOWN
-# --------------------------------------------------
-
-st.markdown('<div class="section-heading">Appliance Breakdown</div>',
-            unsafe_allow_html=True)
-
-breakdown_col1, breakdown_col2 = st.columns(2, gap="large")
-
-with breakdown_col1:
-    light_monthly = light_power * HOURS_PER_DAY * DAYS_PER_MONTH / 1000
-    light_cost = light_monthly * RATE_PER_UNIT
-
-    st.markdown(f"""
-    <div class="panel">
-        <div class="device-title">💡 Lighting</div>
-        <hr>
-        <div class="metric-label">Current power</div>
-        <div class="metric-value">{light_power:.2f} W</div>
-        <br>
-        <div class="metric-label">Monthly consumption</div>
-        <div style="font-size:19px;font-weight:700;color:#526FE0;">
-            {light_monthly:.2f} kWh
+    <section class="metrics">
+        <div class="metric">
+            <div class="metric-label">LIVE POWER LOAD</div>
+            <div class="metric-value" id="totalPower">37.0 W</div>
+            <div class="metric-note">Combined appliance power</div>
         </div>
-        <br>
-        <div class="metric-label">Estimated monthly cost</div>
-        <div style="font-size:19px;font-weight:700;color:#17213B;">
-            ₹{light_cost:.2f}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
 
-with breakdown_col2:
-    fan_monthly = fan_power * HOURS_PER_DAY * DAYS_PER_MONTH / 1000
-    fan_cost = fan_monthly * RATE_PER_UNIT
-
-    st.markdown(f"""
-    <div class="panel">
-        <div class="device-title">🌀 Ceiling Fan</div>
-        <hr>
-        <div class="metric-label">Current power</div>
-        <div class="metric-value">{fan_power:.2f} W</div>
-        <br>
-        <div class="metric-label">Monthly consumption</div>
-        <div style="font-size:19px;font-weight:700;color:#526FE0;">
-            {fan_monthly:.2f} kWh
+        <div class="metric">
+            <div class="metric-label">MONTHLY ENERGY</div>
+            <div class="metric-value" id="monthlyEnergy">5.55 kWh</div>
+            <div class="metric-note">Estimated electricity units</div>
         </div>
-        <br>
-        <div class="metric-label">Estimated monthly cost</div>
-        <div style="font-size:19px;font-weight:700;color:#17213B;">
-            ₹{fan_cost:.2f}
+
+        <div class="metric">
+            <div class="metric-label">PREDICTED MONTHLY BILL</div>
+            <div class="metric-value yellow" id="monthlyCost">₹44.40</div>
+            <div class="metric-note">Estimated electricity cost</div>
+        </div>
+    </section>
+
+    <!-- BREAKDOWN -->
+
+    <div class="section-title">Appliance Breakdown</div>
+
+    <section class="breakdown">
+        <div class="card">
+            <div class="device-title">💡 Lighting</div>
+
+            <div class="break-row">
+                <span>Monthly energy</span>
+                <strong id="lightEnergy">1.05 kWh</strong>
+            </div>
+            <div class="bar">
+                <div class="bar-fill" id="lightBar"></div>
+            </div>
+
+            <div class="break-row">
+                <span>Monthly estimated cost</span>
+                <strong id="lightCost">₹8.40</strong>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="device-title">🌀 Ceiling Fan</div>
+
+            <div class="break-row">
+                <span>Monthly energy</span>
+                <strong id="fanEnergy">4.50 kWh</strong>
+            </div>
+            <div class="bar">
+                <div class="bar-fill" id="fanBar"></div>
+            </div>
+
+            <div class="break-row">
+                <span>Monthly estimated cost</span>
+                <strong id="fanCost">₹36.00</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- ASSUMPTIONS -->
+
+    <div class="section-title">Calculation Assumptions</div>
+
+    <div class="card">
+        <div class="assumption-grid">
+            <span class="assumption">Light: 10 W maximum</span>
+            <span class="assumption">Fan: 50 W maximum</span>
+            <span class="assumption">Daily use: 5 hours</span>
+            <span class="assumption">30-day month</span>
+            <span class="assumption">Tariff: ₹8 / kWh</span>
+        </div>
+
+        <div class="notice">
+            This dashboard is an interactive simulation.
+            Power consumption is estimated using illustrative linear
+            appliance models. Actual fan power does not necessarily
+            vary linearly with speed. Real consumption and electricity
+            bills depend on appliance specifications, usage and local tariffs.
+            These controls do not operate physical appliances or the Arduino model.
         </div>
     </div>
-    """, unsafe_allow_html=True)
 
-# --------------------------------------------------
-# ASSUMPTIONS AND FOOTER
-# --------------------------------------------------
-
-st.markdown('<div class="section-heading">Calculation Assumptions</div>',
-            unsafe_allow_html=True)
-
-st.markdown(f"""
-<div class="panel">
-    <div style="display:flex;flex-wrap:wrap;gap:12px;">
-        <div class="power-pill">Light: {LIGHT_MAX_WATTS} W at 100%</div>
-        <div class="power-pill">Fan: {FAN_MAX_WATTS} W at 100%</div>
-        <div class="power-pill">Daily use: {HOURS_PER_DAY} hours</div>
-        <div class="power-pill">Billing period: {DAYS_PER_MONTH} days</div>
-        <div class="power-pill">Tariff: ₹{RATE_PER_UNIT}/kWh</div>
+    <div class="footer">
+        HOMEMIND AI · SMART HOME ENERGY SIMULATOR
+        <br><br>
+        DESIGNED FOR SMARTER EVERYDAY LIVING
     </div>
-    <br>
-    <div class="note">
-        These figures are illustrative estimates for demonstration.
-        Actual electricity consumption depends on the appliance,
-        its efficiency, operating conditions and local electricity tariff.
-        Fan power does not necessarily vary linearly with its speed.
-        This dashboard is a simulation and does not control physical appliances.
-    </div>
+
 </div>
-""", unsafe_allow_html=True)
 
-st.markdown("""
-<div style="text-align:center;padding:20px 0;color:#9AA3B5;font-size:12px;">
-    HOMEMIND AI · SMART HOME ENERGY SIMULATOR
-    <br>
-    Designed for an interactive smart home demonstration
-</div>
-""", unsafe_allow_html=True)
+<script>
+(function () {
+    const LIGHT_WATTS = 10;
+    const FAN_WATTS = 50;
+    const HOURS_PER_DAY = 5;
+    const DAYS_PER_MONTH = 30;
+    const RATE = 8;
+
+    let lightOn = true;
+    let fanOn = true;
+
+    let light = 70;
+    let fan = 60;
+
+    const $ = (id) => document.getElementById(id);
+
+    const lightSlider = $("lightSlider");
+    const fanSlider = $("fanSlider");
+
+    function money(value) {
+        return "₹" + value.toFixed(2);
+    }
+
+    function updateSliderTrack(slider) {
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const value = Number(slider.value);
+        const percentage = ((value - min) / (max - min)) * 100;
+
+        slider.style.background =
+            `linear-gradient(to right, #FFD66B ${percentage}%, #303A4D ${percentage}%)`;
+    }
+
+    function updateLightVisual() {
+        const intensity = lightOn ? light / 100 : 0;
+
+        $("bulbGlow").style.opacity = intensity;
+        $("bulbSvg").style.filter =
+            intensity > 0
+            ? `drop-shadow(0 0 ${8 + intensity * 25}px rgba(255,214,107,${intensity * .8}))`
+            : "none";
+
+        $("bulbGlass").style.opacity = lightOn ? .2 + intensity * .8 : .2;
+
+        $("lightState").textContent = lightOn ? "● ON" : "○ OFF";
+        $("lightState").classList.toggle("active", lightOn);
+
+        $("lightButtonText").textContent =
+            lightOn ? "LIGHT IS ON · TAP TO TURN OFF" :
+                      "LIGHT IS OFF · TAP TO TURN ON";
+
+        $("lightSymbol").textContent = lightOn ? "✓" : "○";
+        $("lightToggle").classList.toggle("on", lightOn);
+        $("lightToggle").setAttribute(
+            "aria-label",
+            lightOn ? "Turn light off" : "Turn light on"
+        );
+
+        $("lightSlider").disabled = !lightOn;
+        $("lightValue").textContent = light + "%";
+        $("lightWatts").textContent =
+            (lightOn ? LIGHT_WATTS * light / 100 : 0).toFixed(1) + " W";
+
+        $("bulbVisual").classList.toggle("disabled-visual", !lightOn);
+        updateSliderTrack(lightSlider);
+    }
+
+    function updateFanVisual() {
+        const rotor = $("fanRotor");
+
+        const activeSpeed = fanOn ? fan : 0;
+
+        if (activeSpeed > 0) {
+            const duration = 3.5 - (activeSpeed / 100) * 3.25;
+            rotor.style.animationDuration = duration + "s";
+            rotor.style.animationPlayState = "running";
+        } else {
+            rotor.style.animationPlayState = "paused";
+        }
+
+        $("fanState").textContent = fanOn ? "● ON" : "○ OFF";
+        $("fanState").classList.toggle("active", fanOn);
+
+        $("fanButtonText").textContent =
+            fanOn ? "FAN IS ON · TAP TO TURN OFF" :
+                    "FAN IS OFF · TAP TO TURN ON";
+
+        $("fanSymbol").textContent = fanOn ? "✓" : "○";
+        $("fanToggle").classList.toggle("on", fanOn);
+        $("fanToggle").setAttribute(
+            "aria-label",
+            fanOn ? "Turn fan off" : "Turn fan on"
+        );
+
+        $("fanSlider").disabled = !fanOn;
+        $("fanValue").textContent = fan + "%";
+        $("fanWatts").textContent =
+            (fanOn ? FAN_WATTS * fan / 100 : 0).toFixed(1) + " W";
+
+        $("fanVisual").classList.toggle("disabled-visual", !fanOn);
+        updateSliderTrack(fanSlider);
+    }
+
+    function updateCalculations() {
+        const lightPower = lightOn ? LIGHT_WATTS * light / 100 : 0;
+        const fanPower = fanOn ? FAN_WATTS * fan / 100 : 0;
+
+        const totalPower = lightPower + fanPower;
+
+        const lightEnergy =
+            lightPower * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+
+        const fanEnergy =
+            fanPower * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+
+        const monthlyEnergy = lightEnergy + fanEnergy;
+
+        const lightCost = lightEnergy * RATE;
+        const fanCost = fanEnergy * RATE;
+
+        const totalCost = monthlyEnergy * RATE;
+
+        $("totalPower").textContent = totalPower.toFixed(1) + " W";
+        $("monthlyEnergy").textContent = monthlyEnergy.toFixed(2) + " kWh";
+        $("monthlyCost").textContent = money(totalCost);
+
+        $("lightEnergy").textContent = lightEnergy.toFixed(2) + " kWh";
+        $("fanEnergy").textContent = fanEnergy.toFixed(2) + " kWh";
+
+        $("lightCost").textContent = money(lightCost);
+        $("fanCost").textContent = money(fanCost);
+
+        const lightShare = monthlyEnergy > 0
+            ? lightEnergy / monthlyEnergy * 100 : 0;
+
+        const fanShare = monthlyEnergy > 0
+            ? fanEnergy / monthlyEnergy * 100 : 0;
+
+        $("lightBar").style.width = lightShare + "%";
+        $("fanBar").style.width = fanShare + "%";
+    }
+
+    function updateAll() {
+        updateLightVisual();
+        updateFanVisual();
+        updateCalculations();
+    }
+
+    lightSlider.addEventListener("input", function () {
+        light = Number(this.value);
+        updateAll();
+    });
+
+    fanSlider.addEventListener("input", function () {
+        fan = Number(this.value);
+        updateAll();
+    });
+
+    $("lightToggle").addEventListener("click", function () {
+        lightOn = !lightOn;
+        updateAll();
+    });
+
+    $("fanToggle").addEventListener("click", function () {
+        fanOn = !fanOn;
+        updateAll();
+    });
+
+    updateAll();
+})();
+</script>
+
+</body>
+</html>
+"""
+
+components.html(
+    dashboard,
+    height=1800,
+    scrolling=True
+)
