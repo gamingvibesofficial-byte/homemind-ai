@@ -5,12 +5,9 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="HomeMind AI | Smart Living",
     page_icon="🏠",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
-
-# All live controls, animations and calculations run inside
-# this HTML/JavaScript dashboard. No paid API is required.
 
 dashboard = r"""
 <!DOCTYPE html>
@@ -23,990 +20,1579 @@ dashboard = r"""
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg: #090D18;
-    --panel: #111827;
-    --panel2: #151E30;
-    --border: rgba(255,255,255,.075);
-    --white: #F6F7FB;
-    --muted: #8993A8;
-    --yellow: #FFD66B;
-    --blue: #7895FF;
-    --green: #62D6A5;
+ --bg:#080C16;
+ --shell:#111827;
+ --screen:#0B1220;
+ --panel:#18243A;
+ --line:rgba(255,255,255,.09);
+ --white:#F7F8FC;
+ --muted:#94A0B5;
+ --yellow:#FFD66B;
+ --green:#62D6A5;
 }
 
-* {
-    box-sizing: border-box;
+* { box-sizing:border-box; }
+
+html,body {
+ margin:0;
+ background:transparent;
+ color:var(--white);
+ font-family:'DM Sans',sans-serif;
 }
 
-body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--white);
-    font-family: 'DM Sans', sans-serif;
+button { font:inherit; }
+
+.stage {
+ width:100%;
+ display:flex;
+ justify-content:center;
+ padding:18px 8px 26px;
 }
 
-.dashboard {
-    width: 100%;
-    max-width: 1250px;
-    margin: auto;
-    padding: 24px 22px 38px;
+.phone {
+ width:100%;
+ max-width:430px;
+ min-height:830px;
+ background:var(--shell);
+ border:2px solid #3B465A;
+ border-radius:43px;
+ padding:9px;
+ box-shadow:0 28px 80px rgba(0,0,0,.48);
+ overflow:hidden;
+ position:relative;
 }
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 25px;
+.screen {
+ min-height:810px;
+ background:var(--screen);
+ border-radius:34px;
+ overflow:hidden;
+ position:relative;
+ padding-bottom:86px;
+}
+
+.notch {
+ position:absolute;
+ top:8px;
+ left:50%;
+ transform:translateX(-50%);
+ width:88px;
+ height:19px;
+ border-radius:20px;
+ background:#03060B;
+ z-index:3;
+}
+
+.statusbar {
+ height:34px;
+ padding:8px 22px 0;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ font-size:11px;
+ font-weight:800;
+}
+
+.status-icons {
+ display:flex;
+ gap:6px;
+ align-items:center;
+}
+
+.apphead {
+ padding:17px 20px 12px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
 }
 
 .brand {
-    display: flex;
-    align-items: center;
-    gap: 13px;
+ display:flex;
+ align-items:center;
+ gap:10px;
 }
 
 .brand-icon {
-    width: 47px;
-    height: 47px;
-    border-radius: 15px;
-    display: grid;
-    place-items: center;
-    background: linear-gradient(135deg,#26395E,#18243E);
-    border: 1px solid rgba(255,255,255,.1);
-    font-size: 23px;
+ width:39px;
+ height:39px;
+ border-radius:13px;
+ display:grid;
+ place-items:center;
+ background:linear-gradient(140deg,#344B75,#1A2945);
+ border:1px solid var(--line);
+ font-size:21px;
 }
 
 .brand-name {
-    font-family: Outfit,sans-serif;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -.5px;
+ font:800 18px Outfit,sans-serif;
 }
 
 .brand-sub {
-    color: var(--muted);
-    font-size: 11px;
-    margin-top: 2px;
-    letter-spacing: 1.4px;
+ font-size:8px;
+ letter-spacing:1.5px;
+ color:var(--muted);
+ margin-top:2px;
 }
 
-.status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #121C2C;
-    border: 1px solid var(--border);
-    border-radius: 30px;
-    padding: 10px 15px;
-    color: #B9C5D9;
-    font-size: 12px;
-    font-weight: 700;
+.sim-pill {
+ font-size:9px;
+ font-weight:800;
+ color:var(--green);
+ background:rgba(98,214,165,.09);
+ border:1px solid rgba(98,214,165,.18);
+ padding:7px 9px;
+ border-radius:20px;
+ white-space:nowrap;
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 10px var(--green);
+.page {
+ display:none;
+ padding:5px 17px 20px;
+ animation:appear .2s ease;
+}
+
+.page.active { display:block; }
+
+@keyframes appear {
+ from { opacity:.4; transform:translateY(4px); }
+ to { opacity:1; transform:translateY(0); }
+}
+
+.greeting { padding:10px 3px 17px; }
+
+.eyebrow {
+ font-size:9px;
+ font-weight:800;
+ letter-spacing:1.7px;
+ color:var(--yellow);
+ margin-bottom:7px;
+}
+
+h1 {
+ font:700 27px/1.12 Outfit,sans-serif;
+ letter-spacing:-.7px;
+ margin:0;
+}
+
+.subtext {
+ font-size:11px;
+ line-height:1.55;
+ color:var(--muted);
+ margin:7px 0 0;
 }
 
 .hero {
-    position: relative;
-    overflow: hidden;
-    padding: 30px;
-    border-radius: 24px;
-    background:
-        radial-gradient(circle at 85% 15%,rgba(255,214,107,.12),transparent 30%),
-        linear-gradient(115deg,#17233B,#101827 70%);
-    border: 1px solid var(--border);
-    margin-bottom: 26px;
+ border:1px solid var(--line);
+ border-radius:20px;
+ padding:16px;
+ background:
+ radial-gradient(circle at 90% 10%,rgba(255,214,107,.12),transparent 38%),
+ linear-gradient(130deg,#1B2A46,#121D30);
+ margin-bottom:19px;
 }
 
-.hero-tag {
-    color: var(--yellow);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
+.hero-top {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ color:#AEBBD0;
+ font-size:10px;
+ font-weight:700;
 }
 
-.hero h1 {
-    font-family: Outfit,sans-serif;
-    font-size: clamp(27px,4vw,39px);
-    line-height: 1.12;
-    margin: 0;
-    letter-spacing: -.8px;
+.live-dot {
+ width:7px;
+ height:7px;
+ border-radius:50%;
+ background:var(--green);
+ display:inline-block;
+ margin-right:5px;
+ box-shadow:0 0 9px var(--green);
 }
 
-.hero p {
-    color: #A9B4C8;
-    font-size: 14px;
-    line-height: 1.7;
-    max-width: 540px;
-    margin: 12px 0 0;
+.hero-number {
+ font:800 33px Outfit,sans-serif;
+ margin-top:9px;
+}
+
+.hero-foot {
+ font-size:10px;
+ color:var(--yellow);
+ margin-top:3px;
+}
+
+.section-head {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin:19px 2px 10px;
 }
 
 .section-title {
-    font-family: Outfit,sans-serif;
-    font-size: 20px;
-    font-weight: 700;
-    margin: 28px 0 14px;
+ font:700 16px Outfit,sans-serif;
 }
 
-.section-desc {
-    color: var(--muted);
-    font-size: 12px;
-    margin-top: -8px;
-    margin-bottom: 16px;
+.section-hint {
+ font-size:9px;
+ color:var(--muted);
 }
 
 .devices {
-    display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 17px;
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:10px;
 }
 
-.card {
-    background: linear-gradient(145deg,#141D2E,#101725);
-    border: 1px solid var(--border);
-    border-radius: 23px;
-    padding: 23px;
-    min-width: 0;
-    box-shadow: 0 12px 35px rgba(0,0,0,.12);
+.device {
+ background:linear-gradient(145deg,#18243A,#121B2B);
+ border:1px solid var(--line);
+ border-radius:18px;
+ padding:13px;
+ min-width:0;
 }
 
-.device-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 12px;
+.device-top {
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
 }
 
-.device-title {
-    font-family: Outfit,sans-serif;
-    font-size: 19px;
-    font-weight: 700;
+.device-icon { font-size:25px; }
+
+.device-state {
+ font-size:8px;
+ font-weight:800;
+ border-radius:12px;
+ padding:5px 7px;
+ background:#273247;
+ color:#A6B1C4;
 }
 
-.device-subtitle {
-    font-size: 12px;
-    color: var(--muted);
-    margin-top: 5px;
+.device-state.on {
+ color:var(--green);
+ background:rgba(98,214,165,.1);
 }
 
-.state {
-    color: #8D98AD;
-    background: #202A3C;
-    padding: 7px 11px;
-    border-radius: 20px;
-    font-size: 10px;
-    font-weight: 800;
-    white-space: nowrap;
+.device-name {
+ font:700 12px Outfit,sans-serif;
+ margin-top:9px;
 }
 
-.state.active {
-    color: var(--green);
-    background: rgba(98,214,165,.1);
+.device-watts {
+ font-size:9px;
+ color:var(--muted);
+ margin-top:3px;
+}
+
+.toggle {
+ border:1px solid var(--line);
+ border-radius:11px;
+ background:#253149;
+ color:#D8DFEB;
+ width:100%;
+ padding:9px 5px;
+ margin-top:11px;
+ font-size:9px;
+ font-weight:800;
+ cursor:pointer;
+ min-height:35px;
+}
+
+.toggle.on {
+ background:rgba(255,214,107,.13);
+ border-color:rgba(255,214,107,.32);
+ color:var(--yellow);
+}
+
+.visual-card {
+ background:linear-gradient(145deg,#18243A,#121B2B);
+ border:1px solid var(--line);
+ border-radius:18px;
+ padding:14px;
+ margin-top:10px;
+}
+
+.visual-head {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+
+.visual-title {
+ font:700 12px Outfit,sans-serif;
+}
+
+.visual-meta {
+ font-size:9px;
+ color:var(--muted);
 }
 
 .visual {
-    height: 205px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    margin: 8px 0 3px;
+ height:105px;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ position:relative;
 }
 
 .bulb-glow {
-    position: absolute;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    background: radial-gradient(circle,rgba(255,214,107,.28),transparent 70%);
-    opacity: .7;
-    transition: opacity .08s linear;
-    pointer-events: none;
+ position:absolute;
+ width:100px;
+ height:100px;
+ border-radius:50%;
+ background:radial-gradient(circle,rgba(255,214,107,.35),transparent 70%);
+ opacity:.7;
+ pointer-events:none;
 }
 
 .bulb-svg {
-    position: relative;
-    z-index: 1;
-    width: 125px;
-    height: 160px;
-    overflow: visible;
-    filter: drop-shadow(0 0 0 transparent);
-    transition: filter .08s linear;
+ width:65px;
+ height:90px;
+ position:relative;
+ filter:drop-shadow(0 0 14px rgba(255,214,107,.5));
 }
 
 .fan-svg {
-    width: 190px;
-    height: 175px;
-    overflow: visible;
+ width:125px;
+ height:110px;
+ overflow:visible;
 }
 
 .fan-rotor {
-    transform-origin: 100px 87px;
-    animation: spin 1.5s linear infinite;
-    animation-play-state: paused;
+ transform-origin:100px 87px;
+ animation:spin 1.5s linear infinite;
+ animation-play-state:paused;
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.icon-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    min-height: 55px;
-    border-radius: 15px;
-    border: 1px solid rgba(255,255,255,.12);
-    background: #202B3D;
-    color: white;
-    cursor: pointer;
-    font-family: 'DM Sans',sans-serif;
-    font-weight: 800;
-    font-size: 13px;
-    transition: .2s ease;
-    margin-top: 8px;
-}
-
-.icon-button.on {
-    background: linear-gradient(110deg,#554A2D,#3D3627);
-    border-color: rgba(255,214,107,.35);
-    color: var(--yellow);
-}
-
-.icon-button:hover {
-    transform: translateY(-1px);
-    filter: brightness(1.15);
-}
-
-.icon-button:active {
-    transform: scale(.985);
-}
-
-.switch-symbol {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    border: 1.5px solid currentColor;
-    font-size: 13px;
-}
-
-.control-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 23px;
-    margin-bottom: 11px;
-}
-
-.control-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #DDE3EF;
-}
-
-.control-value {
-    color: var(--yellow);
-    font-family: Outfit,sans-serif;
-    font-size: 15px;
-    font-weight: 800;
+ to { transform:rotate(360deg); }
 }
 
 .range {
-    appearance: none;
-    width: 100%;
-    height: 11px;
-    border-radius: 20px;
-    outline: none;
-    cursor: pointer;
-    margin: 8px 0 4px;
-    background: #303A4D;
-    touch-action: pan-y;
+ appearance:none;
+ width:100%;
+ height:9px;
+ border-radius:20px;
+ outline:none;
+ cursor:pointer;
+ background:#303A4D;
+ touch-action:pan-y;
 }
 
 .range::-webkit-slider-thumb {
-    appearance: none;
-    width: 27px;
-    height: 27px;
-    border-radius: 50%;
-    background: var(--yellow);
-    border: 5px solid #FFF3D1;
-    box-shadow: 0 0 0 5px rgba(255,214,107,.12),0 2px 12px rgba(0,0,0,.4);
-    cursor: grab;
+ appearance:none;
+ width:25px;
+ height:25px;
+ border-radius:50%;
+ background:var(--yellow);
+ border:4px solid #FFF3D1;
+ box-shadow:0 0 0 4px rgba(255,214,107,.12);
+ cursor:grab;
 }
 
 .range::-moz-range-thumb {
-    width: 19px;
-    height: 19px;
-    border-radius: 50%;
-    background: var(--yellow);
-    border: 5px solid #FFF3D1;
-    box-shadow: 0 0 0 5px rgba(255,214,107,.12);
-    cursor: grab;
+ width:17px;
+ height:17px;
+ border-radius:50%;
+ background:var(--yellow);
+ border:4px solid #FFF3D1;
+ cursor:grab;
 }
 
 .range:disabled {
-    opacity: .3;
-    cursor: not-allowed;
+ opacity:.3;
+ cursor:not-allowed;
 }
 
-.range:disabled::-webkit-slider-thumb {
-    cursor: not-allowed;
+.range-row {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin:7px 0 8px;
+ font-size:10px;
+ color:#DCE3EF;
+ font-weight:700;
 }
 
-.range-help {
-    display: flex;
-    justify-content: space-between;
-    color: #727F95;
-    font-size: 10px;
-    margin-top: 8px;
+.range-row strong {
+ color:var(--yellow);
+ font:800 12px Outfit,sans-serif;
 }
 
-.power-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-top: 1px solid var(--border);
-    padding-top: 15px;
-    margin-top: 17px;
-    color: var(--muted);
-    font-size: 12px;
+.watt-line {
+ display:flex;
+ justify-content:space-between;
+ border-top:1px solid var(--line);
+ padding-top:9px;
+ margin-top:10px;
+ color:var(--muted);
+ font-size:9px;
 }
 
-.power-line strong {
-    color: white;
-    font-size: 14px;
+.watt-line strong {
+ color:var(--white);
+ font-size:10px;
 }
 
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(3,minmax(0,1fr));
-    gap: 15px;
+.add-card {
+ border:1px dashed rgba(255,214,107,.45);
+ background:rgba(255,214,107,.035);
+ border-radius:17px;
+ min-height:106px;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:6px;
+ color:var(--yellow);
+ cursor:pointer;
+ transition:.2s;
+}
+
+.add-card:hover {
+ background:rgba(255,214,107,.09);
+ transform:translateY(-1px);
+}
+
+.add-plus { font-size:25px; line-height:1; }
+.add-label { font-size:10px; font-weight:800; }
+.add-caption { font-size:8px; color:var(--muted); }
+
+.extra-device {
+ background:linear-gradient(145deg,#18243A,#121B2B);
+ border:1px solid var(--line);
+ border-radius:15px;
+ padding:11px;
+ display:flex;
+ align-items:center;
+ gap:9px;
+ min-width:0;
+}
+
+.extra-icon { font-size:23px; }
+
+.extra-info { min-width:0; flex:1; }
+
+.extra-name {
+ font:700 10px Outfit,sans-serif;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+}
+
+.extra-desc {
+ font-size:8px;
+ color:var(--muted);
+ margin-top:3px;
+}
+
+.extra-actions {
+ display:flex;
+ gap:5px;
+ align-items:center;
+}
+
+.mini-toggle,.remove {
+ border:1px solid var(--line);
+ background:#273247;
+ color:#DCE3EF;
+ border-radius:8px;
+ padding:6px 7px;
+ font-size:8px;
+ font-weight:800;
+ cursor:pointer;
+}
+
+.mini-toggle.on {
+ color:var(--yellow);
+ border-color:rgba(255,214,107,.3);
+}
+
+.remove {
+ color:#FF9B9B;
+ padding:6px;
+}
+
+.metric-grid {
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:9px;
 }
 
 .metric {
-    background: linear-gradient(145deg,#151F30,#101725);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 21px;
-    min-width: 0;
+ background:linear-gradient(145deg,#18243A,#121B2B);
+ border:1px solid var(--line);
+ border-radius:16px;
+ padding:14px;
 }
 
+.metric.wide { grid-column:1/-1; }
+
 .metric-label {
-    color: #98A3B8;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .7px;
+ font-size:8px;
+ font-weight:800;
+ letter-spacing:.8px;
+ color:var(--muted);
 }
 
 .metric-value {
-    font-family: Outfit,sans-serif;
-    font-size: clamp(22px,3vw,31px);
-    font-weight: 800;
-    margin-top: 10px;
-    letter-spacing: -.5px;
-    color: white;
-    overflow-wrap: anywhere;
+ font:800 23px Outfit,sans-serif;
+ margin-top:7px;
+ overflow-wrap:anywhere;
 }
 
-.metric-value.yellow {
-    color: var(--yellow);
-}
+.metric-value.yellow { color:var(--yellow); }
 
 .metric-note {
-    color: #7E8AA0;
-    font-size: 11px;
-    margin-top: 6px;
+ font-size:9px;
+ color:#7E8AA0;
+ margin-top:4px;
 }
 
-.breakdown {
-    display: grid;
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 15px;
+.break-card,.settings-card {
+ background:linear-gradient(145deg,#18243A,#121B2B);
+ border:1px solid var(--line);
+ border-radius:17px;
+ padding:14px;
+ margin-top:10px;
+}
+
+.break-title {
+ font:700 12px Outfit,sans-serif;
 }
 
 .break-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin: 15px 0;
-    font-size: 12px;
+ display:flex;
+ justify-content:space-between;
+ gap:10px;
+ margin-top:13px;
+ font-size:10px;
+ color:#AAB5C8;
 }
 
-.break-row span:first-child {
-    color: #A1ACC0;
-}
-
-.break-row strong {
-    color: white;
-}
+.break-row strong { color:white; }
 
 .bar {
-    width: 100%;
-    height: 7px;
-    background: #2A3447;
-    border-radius: 20px;
-    overflow: hidden;
-    margin-top: 10px;
+ height:6px;
+ background:#303A4D;
+ border-radius:10px;
+ overflow:hidden;
+ margin-top:8px;
 }
 
 .bar-fill {
-    height: 100%;
-    border-radius: 20px;
-    background: linear-gradient(90deg,#E9B84E,#FFE08B);
-    width: 0%;
-    transition: width .08s linear;
+ height:100%;
+ border-radius:10px;
+ background:linear-gradient(90deg,#E9B84E,#FFE08B);
+ width:0%;
+ transition:width .1s;
 }
 
-.assumption-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 9px;
-    margin-bottom: 15px;
+.setting-row {
+ display:flex;
+ justify-content:space-between;
+ gap:12px;
+ padding:11px 0;
+ border-bottom:1px solid var(--line);
+ font-size:10px;
 }
 
-.assumption {
-    padding: 9px 12px;
-    border-radius: 10px;
-    background: #202A3C;
-    border: 1px solid var(--border);
-    color: #DCE3EF;
-    font-size: 11px;
-    font-weight: 600;
-}
+.setting-row:last-child { border-bottom:0; }
+.setting-row span { color:var(--muted); }
+.setting-row strong { text-align:right; }
 
 .notice {
-    color: #8390A6;
-    font-size: 11px;
-    line-height: 1.7;
+ font-size:9px;
+ line-height:1.65;
+ color:#8B98AD;
+ margin-top:13px;
 }
 
-.footer {
-    text-align: center;
-    padding: 30px 10px 5px;
-    color: #68758B;
-    font-size: 10px;
-    letter-spacing: 1px;
+.bottom-nav {
+ position:absolute;
+ bottom:0;
+ left:0;
+ right:0;
+ height:76px;
+ background:rgba(14,22,36,.97);
+ border-top:1px solid var(--line);
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ padding:9px 14px 14px;
+ z-index:5;
 }
 
-.disabled-visual {
-    opacity: .35;
+.nav-btn {
+ border:0;
+ background:transparent;
+ color:#78859B;
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ justify-content:center;
+ gap:4px;
+ font-size:8px;
+ font-weight:800;
+ cursor:pointer;
+ border-radius:12px;
 }
 
-@media(max-width:700px) {
-    .dashboard {
-        padding: 16px 12px 28px;
-    }
+.nav-icon { font-size:19px; line-height:1; }
 
-    .hero {
-        padding: 24px 20px;
-        border-radius: 19px;
-    }
+.nav-btn.active {
+ color:var(--yellow);
+ background:rgba(255,214,107,.07);
+}
 
-    .devices {
-        grid-template-columns: 1fr;
-    }
+.home-indicator {
+ position:absolute;
+ bottom:4px;
+ left:50%;
+ transform:translateX(-50%);
+ width:76px;
+ height:4px;
+ border-radius:5px;
+ background:#CBD1DC;
+ opacity:.65;
+ z-index:7;
+ pointer-events:none;
+}
 
-    .metrics {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
+.modal-backdrop {
+ position:absolute;
+ inset:0;
+ background:rgba(0,0,0,.68);
+ z-index:10;
+ display:none;
+ align-items:flex-end;
+ padding:10px;
+}
 
-    .metric {
-        padding: 17px;
-    }
+.modal-backdrop.open { display:flex; }
 
-    .metric-value {
-        font-size: 27px;
-    }
+.modal {
+ width:100%;
+ background:#172338;
+ border:1px solid rgba(255,255,255,.13);
+ border-radius:23px;
+ padding:17px;
+ box-shadow:0 20px 60px rgba(0,0,0,.45);
+ animation:slideup .2s ease;
+}
 
-    .breakdown {
-        grid-template-columns: 1fr;
-    }
+@keyframes slideup {
+ from { transform:translateY(20px); opacity:.5; }
+ to { transform:translateY(0); opacity:1; }
+}
 
-    .card {
-        padding: 19px;
-    }
+.modal-head {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:5px;
+}
 
-    .visual {
-        height: 185px;
-    }
+.modal-title {
+ font:700 17px Outfit,sans-serif;
+}
 
-    .brand-name {
-        font-size: 19px;
-    }
+.close-modal {
+ border:0;
+ background:#2A3850;
+ color:#DCE3EF;
+ border-radius:9px;
+ width:29px;
+ height:29px;
+ cursor:pointer;
+ font-size:16px;
+}
 
-    .status {
-        padding: 9px 10px;
-        font-size: 10px;
-    }
+.modal-desc {
+ font-size:10px;
+ color:var(--muted);
+ margin-bottom:13px;
+}
 
-    .range {
-        height: 13px;
-        margin: 12px 0 8px;
-    }
+.option-grid {
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:8px;
+}
 
-    .range::-webkit-slider-thumb {
-        width: 31px;
-        height: 31px;
-    }
+.option {
+ border:1px solid var(--line);
+ border-radius:14px;
+ background:#202E45;
+ color:white;
+ padding:12px 9px;
+ text-align:left;
+ cursor:pointer;
+ min-height:76px;
+}
+
+.option:hover {
+ border-color:rgba(255,214,107,.45);
+ background:#293750;
+}
+
+.option-emoji { font-size:22px; }
+.option-name { font:700 11px Outfit,sans-serif; margin-top:6px; }
+.option-power { font-size:8px; color:var(--muted); margin-top:2px; }
+
+.toast {
+ position:absolute;
+ left:50%;
+ bottom:88px;
+ transform:translateX(-50%);
+ background:#26364E;
+ border:1px solid rgba(255,214,107,.25);
+ color:#FFF0C2;
+ padding:9px 13px;
+ border-radius:20px;
+ font-size:9px;
+ white-space:nowrap;
+ z-index:12;
+ display:none;
+}
+
+.toast.show { display:block; }
+
+.page-footer {
+ text-align:center;
+ color:#65728A;
+ font-size:8px;
+ letter-spacing:1px;
+ padding:20px 0 4px;
+}
+
+@media(max-width:480px) {
+ .stage { padding:0; margin:0; }
+ .phone {
+  max-width:none;
+  border:0;
+  border-radius:0;
+  padding:0;
+  min-height:100vh;
+  box-shadow:none;
+ }
+ .screen {
+  min-height:100vh;
+  border-radius:0;
+  padding-bottom:90px;
+ }
+ .notch { top:7px; }
+ .statusbar { padding-top:9px; }
+ .bottom-nav { position:fixed; }
+ .home-indicator { position:fixed; }
 }
 </style>
 </head>
 
 <body>
-<div class="dashboard">
+<div class="stage">
+<div class="phone">
+<div class="screen">
 
-    <header class="header">
-        <div class="brand">
-            <div class="brand-icon">⌂</div>
-            <div>
-                <div class="brand-name">HomeMind <span style="color:#FFD66B">AI</span></div>
-                <div class="brand-sub">SMART LIVING SYSTEM</div>
-            </div>
-        </div>
+<div class="notch"></div>
 
-        <div class="status">
-            <span class="status-dot"></span>
-            SIMULATION ACTIVE
-        </div>
-    </header>
+<div class="statusbar">
+ <span id="clock">21:41</span>
+ <div class="status-icons">
+  <span>▮▮▮</span><span>⌁</span><span>▰</span>
+ </div>
+</div>
 
-    <section class="hero">
-        <div class="hero-tag">✦ YOUR SMART HOME</div>
-        <h1>Control your space.<br>Understand your energy.</h1>
-        <p>
-            A smarter way to manage everyday appliances.
-            Adjust your settings and watch your energy estimates
-            respond instantly.
-        </p>
-    </section>
+<header class="apphead">
+ <div class="brand">
+  <div class="brand-icon">⌂</div>
+  <div>
+   <div class="brand-name">HomeMind <span style="color:#FFD66B">AI</span></div>
+   <div class="brand-sub">SMART LIVING SYSTEM</div>
+  </div>
+ </div>
+ <div class="sim-pill">● SIMULATION</div>
+</header>
 
-    <div class="section-title">Appliance Control</div>
-    <div class="section-desc">
-        Tap an appliance icon to switch it on or off.
-    </div>
+<main>
 
-    <section class="devices">
+<!-- HOME PAGE -->
+<section class="page active" id="homePage">
 
-        <!-- LIGHT CARD -->
+ <div class="greeting">
+  <div class="eyebrow">✦ YOUR SMART HOME</div>
+  <h1>Good evening.<br>Welcome home.</h1>
+  <p class="subtext">
+   Your space, your comfort. Manage your appliances
+   and keep an eye on energy.
+  </p>
+ </div>
 
-        <div class="card">
-            <div class="device-head">
-                <div>
-                    <div class="device-title">Smart Lighting</div>
-                    <div class="device-subtitle">Ambient brightness control</div>
-                </div>
-                <div class="state active" id="lightState">● ON</div>
-            </div>
+ <div class="hero">
+  <div class="hero-top">
+   <span>⚡ LIVE POWER USAGE</span>
+   <span><i class="live-dot"></i>LIVE ESTIMATE</span>
+  </div>
+  <div class="hero-number" id="heroPower">68.0 W</div>
+  <div class="hero-foot" id="activeCount">2 appliances currently active</div>
+ </div>
 
-            <div class="visual" id="bulbVisual">
-                <div class="bulb-glow" id="bulbGlow"></div>
+ <div class="section-head">
+  <div class="section-title">Your appliances</div>
+  <div class="section-hint" id="deviceCount">2 DEVICES</div>
+ </div>
 
-                <svg class="bulb-svg" id="bulbSvg" viewBox="0 0 125 160">
-                    <defs>
-                        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#FFF1B6"/>
-                            <stop offset="100%" stop-color="#E6A92F"/>
-                        </linearGradient>
-                    </defs>
+ <div class="devices">
 
-                    <path id="bulbGlass"
-                        d="M62 12 C29 12 15 38 23 67
-                        C27 83 42 94 46 112
-                        L78 112 C82 94 97 83 101 67
-                        C109 38 95 12 62 12Z"
-                        fill="url(#glass)"
-                        stroke="#FFD66B"
-                        stroke-width="3"/>
+  <div class="device">
+   <div class="device-top">
+    <span class="device-icon">💡</span>
+    <span class="device-state on" id="lightState">ON</span>
+   </div>
+   <div class="device-name">Smart Light</div>
+   <div class="device-watts">Maximum 20 W</div>
+   <button class="toggle on" id="lightToggle">TURN OFF</button>
+  </div>
 
-                    <path d="M47 116 L77 116 M48 124 L76 124
-                    M51 132 L73 132 M55 140 L69 140"
-                        stroke="#B6C0D1"
-                        stroke-width="5"
-                        stroke-linecap="round"/>
+  <div class="device">
+   <div class="device-top">
+    <span class="device-icon">🌀</span>
+    <span class="device-state on" id="fanState">ON</span>
+   </div>
+   <div class="device-name">Ceiling Fan</div>
+   <div class="device-watts">Maximum 90 W</div>
+   <button class="toggle on" id="fanToggle">TURN OFF</button>
+  </div>
 
-                    <path d="M53 145 L71 145"
-                        stroke="#7C879B"
-                        stroke-width="4"
-                        stroke-linecap="round"/>
-                </svg>
-            </div>
+  <button class="add-card" id="openAdd">
+   <span class="add-plus">＋</span>
+   <span class="add-label">Add New Appliance</span>
+   <span class="add-caption">CUSTOMISE YOUR SMART HOME</span>
+  </button>
 
-            <button class="icon-button on" id="lightToggle" type="button"
-                aria-label="Turn light off">
-                <span class="switch-symbol" id="lightSymbol">✓</span>
-                <span id="lightButtonText">LIGHT IS ON · TAP TO TURN OFF</span>
-            </button>
+ </div>
 
-            <div class="control-row">
-                <span class="control-label">Brightness</span>
-                <span class="control-value" id="lightValue">70%</span>
-            </div>
+ <div class="section-head">
+  <div class="section-title">Quick controls</div>
+  <div class="section-hint">LIVE RESPONSE</div>
+ </div>
 
-            <input class="range" id="lightSlider" type="range"
-                min="0" max="100" value="70">
+ <!-- LIGHT CONTROL -->
+ <div class="visual-card">
 
-            <div class="range-help">
-                <span>DIM</span>
-                <span>BRIGHT</span>
-            </div>
+  <div class="visual-head">
+   <span class="visual-title">💡 Light brightness</span>
+   <span class="visual-meta" id="lightValue">70%</span>
+  </div>
 
-            <div class="power-line">
-                <span>Current power consumption</span>
-                <strong id="lightWatts">7.0 W</strong>
-            </div>
-        </div>
+  <div class="visual">
+   <div class="bulb-glow" id="bulbGlow"></div>
 
-        <!-- FAN CARD -->
+   <svg class="bulb-svg" viewBox="0 0 125 160">
+    <defs>
+     <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFF1B6"/>
+      <stop offset="100%" stop-color="#E6A92F"/>
+     </linearGradient>
+    </defs>
 
-        <div class="card">
-            <div class="device-head">
-                <div>
-                    <div class="device-title">Smart Ceiling Fan</div>
-                    <div class="device-subtitle">Adjustable speed control</div>
-                </div>
-                <div class="state active" id="fanState">● ON</div>
-            </div>
+    <path id="bulbGlass"
+     d="M62 12 C29 12 15 38 23 67
+     C27 83 42 94 46 112 L78 112
+     C82 94 97 83 101 67
+     C109 38 95 12 62 12Z"
+     fill="url(#glass)"
+     stroke="#FFD66B"
+     stroke-width="3"/>
 
-            <div class="visual" id="fanVisual">
-                <svg class="fan-svg" viewBox="0 0 200 175">
-                    <defs>
-                        <linearGradient id="bladeGradient" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" stop-color="#FFF0BB"/>
-                            <stop offset="100%" stop-color="#B5C8FF"/>
-                        </linearGradient>
-                    </defs>
+    <path d="M47 116 L77 116 M48 124 L76 124
+    M51 132 L73 132 M55 140 L69 140"
+     stroke="#B6C0D1"
+     stroke-width="5"
+     stroke-linecap="round"/>
 
-                    <g id="fanRotor" class="fan-rotor">
-                        <g fill="url(#bladeGradient)">
-                            <path d="M100 87 C85 66 76 38 91 12
-                            C99 -2 114 3 117 20
-                            C121 44 108 72 100 87Z"/>
+    <path d="M53 145 L71 145"
+     stroke="#7C879B"
+     stroke-width="4"
+     stroke-linecap="round"/>
+   </svg>
+  </div>
 
-                            <path d="M100 87 C85 66 76 38 91 12
-                            C99 -2 114 3 117 20
-                            C121 44 108 72 100 87Z"
-                            transform="rotate(120 100 87)"/>
+  <div class="range-row">
+   <span>DIM</span><strong id="lightRangeLabel">70%</strong>
+  </div>
 
-                            <path d="M100 87 C85 66 76 38 91 12
-                            C99 -2 114 3 117 20
-                            C121 44 108 72 100 87Z"
-                            transform="rotate(240 100 87)"/>
-                        </g>
+  <input class="range" id="lightSlider"
+   type="range" min="0" max="100" value="70">
 
-                        <circle cx="100" cy="87" r="13"
-                            fill="#263A61" stroke="#E7EDFF" stroke-width="3"/>
-                        <circle cx="100" cy="87" r="4" fill="#FFD66B"/>
-                    </g>
-                </svg>
-            </div>
+  <div class="watt-line">
+   <span>Current light power</span>
+   <strong id="lightWatts">14.0 W</strong>
+  </div>
 
-            <button class="icon-button on" id="fanToggle" type="button"
-                aria-label="Turn fan off">
-                <span class="switch-symbol" id="fanSymbol">✓</span>
-                <span id="fanButtonText">FAN IS ON · TAP TO TURN OFF</span>
-            </button>
+ </div>
 
-            <div class="control-row">
-                <span class="control-label">Fan speed</span>
-                <span class="control-value" id="fanValue">60%</span>
-            </div>
+ <!-- FAN CONTROL -->
+ <div class="visual-card">
 
-            <input class="range" id="fanSlider" type="range"
-                min="0" max="100" value="60">
+  <div class="visual-head">
+   <span class="visual-title">🌀 Fan speed</span>
+   <span class="visual-meta" id="fanValue">60%</span>
+  </div>
 
-            <div class="range-help">
-                <span>SLOW</span>
-                <span>FAST</span>
-            </div>
+  <div class="visual">
 
-            <div class="power-line">
-                <span>Current power consumption</span>
-                <strong id="fanWatts">30.0 W</strong>
-            </div>
-        </div>
+   <svg class="fan-svg" viewBox="0 0 200 175">
+    <defs>
+     <linearGradient id="bladeGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFF0BB"/>
+      <stop offset="100%" stop-color="#B5C8FF"/>
+     </linearGradient>
+    </defs>
 
-    </section>
+    <g id="fanRotor" class="fan-rotor">
 
-    <!-- ENERGY METRICS -->
+     <g fill="url(#bladeGradient)">
+      <path d="M100 87 C85 66 76 38 91 12
+      C99 -2 114 3 117 20 C121 44 108 72 100 87Z"/>
 
-    <div class="section-title">Energy Dashboard</div>
-    <div class="section-desc">
-        Estimates update instantly as you adjust the appliances.
-    </div>
+      <path d="M100 87 C85 66 76 38 91 12
+      C99 -2 114 3 117 20 C121 44 108 72 100 87Z"
+      transform="rotate(120 100 87)"/>
 
-    <section class="metrics">
-        <div class="metric">
-            <div class="metric-label">LIVE POWER LOAD</div>
-            <div class="metric-value" id="totalPower">37.0 W</div>
-            <div class="metric-note">Combined appliance power</div>
-        </div>
+      <path d="M100 87 C85 66 76 38 91 12
+      C99 -2 114 3 117 20 C121 44 108 72 100 87Z"
+      transform="rotate(240 100 87)"/>
+     </g>
 
-        <div class="metric">
-            <div class="metric-label">MONTHLY ENERGY</div>
-            <div class="metric-value" id="monthlyEnergy">5.55 kWh</div>
-            <div class="metric-note">Estimated electricity units</div>
-        </div>
+     <circle cx="100" cy="87" r="13"
+      fill="#263A61" stroke="#E7EDFF" stroke-width="3"/>
+     <circle cx="100" cy="87" r="4" fill="#FFD66B"/>
 
-        <div class="metric">
-            <div class="metric-label">PREDICTED MONTHLY BILL</div>
-            <div class="metric-value yellow" id="monthlyCost">₹44.40</div>
-            <div class="metric-note">Estimated electricity cost</div>
-        </div>
-    </section>
+    </g>
+   </svg>
 
-    <!-- BREAKDOWN -->
+  </div>
 
-    <div class="section-title">Appliance Breakdown</div>
+  <div class="range-row">
+   <span>SLOW</span><strong id="fanRangeLabel">60%</strong>
+  </div>
 
-    <section class="breakdown">
-        <div class="card">
-            <div class="device-title">💡 Lighting</div>
+  <input class="range" id="fanSlider"
+   type="range" min="0" max="100" value="60">
 
-            <div class="break-row">
-                <span>Monthly energy</span>
-                <strong id="lightEnergy">1.05 kWh</strong>
-            </div>
-            <div class="bar">
-                <div class="bar-fill" id="lightBar"></div>
-            </div>
+  <div class="watt-line">
+   <span>Current fan power</span>
+   <strong id="fanWatts">54.0 W</strong>
+  </div>
 
-            <div class="break-row">
-                <span>Monthly estimated cost</span>
-                <strong id="lightCost">₹8.40</strong>
-            </div>
-        </div>
+ </div>
 
-        <div class="card">
-            <div class="device-title">🌀 Ceiling Fan</div>
+ <div id="extraDevices"
+  style="display:grid;gap:8px;margin-top:10px">
+ </div>
 
-            <div class="break-row">
-                <span>Monthly energy</span>
-                <strong id="fanEnergy">4.50 kWh</strong>
-            </div>
-            <div class="bar">
-                <div class="bar-fill" id="fanBar"></div>
-            </div>
+ <div class="page-footer">
+  HOMEMIND AI · SMARTER EVERYDAY LIVING
+ </div>
 
-            <div class="break-row">
-                <span>Monthly estimated cost</span>
-                <strong id="fanCost">₹36.00</strong>
-            </div>
-        </div>
-    </section>
+</section>
 
-    <!-- ASSUMPTIONS -->
+<!-- ENERGY PAGE -->
+<section class="page" id="energyPage">
 
-    <div class="section-title">Calculation Assumptions</div>
+ <div class="greeting">
+  <div class="eyebrow">⚡ ENERGY INSIGHTS</div>
+  <h1>Your energy,<br>made clearer.</h1>
+  <p class="subtext">
+   A live estimate based on your current appliance settings.
+  </p>
+ </div>
 
-    <div class="card">
-        <div class="assumption-grid">
-            <span class="assumption">Light: 10 W maximum</span>
-            <span class="assumption">Fan: 50 W maximum</span>
-            <span class="assumption">Daily use: 5 hours</span>
-            <span class="assumption">30-day month</span>
-            <span class="assumption">Tariff: ₹8 / kWh</span>
-        </div>
+ <div class="metric-grid">
 
-        <div class="notice">
-            This dashboard is an interactive simulation.
-            Power consumption is estimated using illustrative linear
-            appliance models. Actual fan power does not necessarily
-            vary linearly with speed. Real consumption and electricity
-            bills depend on appliance specifications, usage and local tariffs.
-            These controls do not operate physical appliances or the Arduino model.
-        </div>
-    </div>
+  <div class="metric">
+   <div class="metric-label">LIVE POWER LOAD</div>
+   <div class="metric-value" id="totalPower">68.0 W</div>
+   <div class="metric-note">Combined appliance power</div>
+  </div>
 
-    <div class="footer">
-        HOMEMIND AI · SMART HOME ENERGY SIMULATOR
-        <br><br>
-        DESIGNED FOR SMARTER EVERYDAY LIVING
-    </div>
+  <div class="metric">
+   <div class="metric-label">MONTHLY ENERGY</div>
+   <div class="metric-value" id="monthlyEnergy">10.20</div>
+   <div class="metric-note">Estimated kWh / units</div>
+  </div>
 
+  <div class="metric wide">
+   <div class="metric-label">PREDICTED MONTHLY BILL</div>
+   <div class="metric-value yellow" id="monthlyCost">₹81.60</div>
+   <div class="metric-note">Illustrative electricity cost</div>
+  </div>
+
+ </div>
+
+ <div class="section-head">
+  <div class="section-title">Appliance breakdown</div>
+ </div>
+
+ <div class="break-card">
+  <div class="break-title">💡 Smart Lighting</div>
+  <div class="break-row">
+   <span>Monthly energy</span>
+   <strong id="lightEnergy">2.10 kWh</strong>
+  </div>
+  <div class="bar"><div class="bar-fill" id="lightBar"></div></div>
+  <div class="break-row">
+   <span>Estimated monthly cost</span>
+   <strong id="lightCost">₹16.80</strong>
+  </div>
+ </div>
+
+ <div class="break-card">
+  <div class="break-title">🌀 Ceiling Fan</div>
+  <div class="break-row">
+   <span>Monthly energy</span>
+   <strong id="fanEnergy">8.10 kWh</strong>
+  </div>
+  <div class="bar"><div class="bar-fill" id="fanBar"></div></div>
+  <div class="break-row">
+   <span>Estimated monthly cost</span>
+   <strong id="fanCost">₹64.80</strong>
+  </div>
+ </div>
+
+ <div class="break-card">
+  <div class="break-title">Added appliances</div>
+  <div id="extraBreakdown" class="notice">
+   No additional appliances have been added.
+  </div>
+ </div>
+
+ <div class="page-footer">
+  ESTIMATES UPDATE AS YOU CHANGE YOUR CONTROLS
+ </div>
+
+</section>
+
+<!-- SETTINGS PAGE -->
+<section class="page" id="settingsPage">
+
+ <div class="greeting">
+  <div class="eyebrow">⚙ PERSONALISE</div>
+  <h1>App settings.</h1>
+  <p class="subtext">
+   Review the assumptions used by this demonstration.
+  </p>
+ </div>
+
+ <div class="settings-card">
+
+  <div class="section-title" style="margin:0 0 5px">
+   Calculation assumptions
+  </div>
+
+  <div class="setting-row">
+   <span>Light maximum power</span><strong>20 W</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>Fan maximum power</span><strong>90 W</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>Daily usage assumption</span><strong>5 hours</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>Monthly period</span><strong>30 days</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>Electricity tariff</span><strong>₹8 / kWh</strong>
+  </div>
+
+ </div>
+
+ <div class="settings-card">
+
+  <div class="section-title" style="margin:0 0 5px">
+   About HomeMind AI
+  </div>
+
+  <p class="notice" style="margin:7px 0 0">
+   HomeMind AI is a student smart-home dashboard concept.
+   Appliance controls, animations and energy calculations are
+   simulated in this browser interface. Adding an appliance
+   creates a demonstration card only; it does not connect
+   to real devices.
+  </p>
+
+ </div>
+
+ <div class="settings-card">
+
+  <div class="section-title" style="margin:0 0 5px">
+   Project status
+  </div>
+
+  <div class="setting-row">
+   <span>Interface</span>
+   <strong style="color:var(--green)">Ready</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>Physical device connection</span>
+   <strong>Not connected</strong>
+  </div>
+
+  <div class="setting-row">
+   <span>External API</span>
+   <strong>Not required</strong>
+  </div>
+
+ </div>
+
+ <div class="page-footer">
+  HOMEMIND AI · SMART LIVING SYSTEM
+ </div>
+
+</section>
+
+</main>
+
+<!-- BOTTOM NAVIGATION -->
+<nav class="bottom-nav">
+
+ <button class="nav-btn active" data-page="homePage">
+  <span class="nav-icon">⌂</span>
+  <span>HOME</span>
+ </button>
+
+ <button class="nav-btn" data-page="energyPage">
+  <span class="nav-icon">ϟ</span>
+  <span>ENERGY</span>
+ </button>
+
+ <button class="nav-btn" data-page="settingsPage">
+  <span class="nav-icon">⚙</span>
+  <span>SETTINGS</span>
+ </button>
+
+</nav>
+
+<div class="home-indicator"></div>
+
+<!-- ADD APPLIANCE POPUP -->
+<div class="modal-backdrop" id="modalBackdrop">
+
+ <div class="modal">
+
+  <div class="modal-head">
+   <div class="modal-title">Add an appliance</div>
+   <button class="close-modal" id="closeModal">×</button>
+  </div>
+
+  <div class="modal-desc">
+   Choose a device to add to your simulated smart home.
+  </div>
+
+  <div class="option-grid">
+
+   <button class="option" data-type="ac">
+    <div class="option-emoji">❄️</div>
+    <div class="option-name">Smart AC</div>
+    <div class="option-power">1500 W maximum</div>
+   </button>
+
+   <button class="option" data-type="tv">
+    <div class="option-emoji">📺</div>
+    <div class="option-name">Smart TV</div>
+    <div class="option-power">100 W maximum</div>
+   </button>
+
+   <button class="option" data-type="lock">
+    <div class="option-emoji">🔒</div>
+    <div class="option-name">Smart Door Lock</div>
+    <div class="option-power">5 W maximum</div>
+   </button>
+
+   <button class="option" data-type="plug">
+    <div class="option-emoji">🔌</div>
+    <div class="option-name">Smart Plug</div>
+    <div class="option-power">100 W demo load</div>
+   </button>
+
+  </div>
+
+  <p class="notice">
+   Demo values only. Actual appliance power varies by model.
+  </p>
+
+ </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+</div>
+</div>
 </div>
 
 <script>
-(function () {
-    const LIGHT_WATTS = 20;
-    const FAN_WATTS = 90;
-    const HOURS_PER_DAY = 5;
-    const DAYS_PER_MONTH = 30;
-    const RATE = 8;
+(function(){
 
-    let lightOn = true;
-    let fanOn = true;
+ const LIGHT_WATTS = 20;
+ const FAN_WATTS = 90;
+ const HOURS_PER_DAY = 5;
+ const DAYS_PER_MONTH = 30;
+ const RATE = 8;
 
-    let light = 70;
-    let fan = 60;
+ let lightOn = true;
+ let fanOn = true;
+ let light = 70;
+ let fan = 60;
 
-    const $ = (id) => document.getElementById(id);
+ let extras = [];
+ let nextId = 1;
 
-    const lightSlider = $("lightSlider");
-    const fanSlider = $("fanSlider");
+ const $ = id => document.getElementById(id);
+ const fmt = n => n.toFixed(2);
+ const money = n => "₹" + n.toFixed(2);
 
-    function money(value) {
-        return "₹" + value.toFixed(2);
-    }
+ function toast(message) {
+  const t = $("toast");
+  t.textContent = message;
+  t.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(
+   () => t.classList.remove("show"), 1900
+  );
+ }
 
-    function updateSliderTrack(slider) {
-        const min = Number(slider.min);
-        const max = Number(slider.max);
-        const value = Number(slider.value);
-        const percentage = ((value - min) / (max - min)) * 100;
+ function track(el) {
+  const p = Number(el.value);
+  el.style.background =
+   `linear-gradient(to right,#FFD66B ${p}%,#303A4D ${p}%)`;
+ }
 
-        slider.style.background =
-            `linear-gradient(to right, #FFD66B ${percentage}%, #303A4D ${percentage}%)`;
-    }
+ function updateLight() {
 
-    function updateLightVisual() {
-        const intensity = lightOn ? light / 100 : 0;
+  const intensity = lightOn ? light / 100 : 0;
 
-        $("bulbGlow").style.opacity = intensity;
-        $("bulbSvg").style.filter =
-            intensity > 0
-            ? `drop-shadow(0 0 ${8 + intensity * 25}px rgba(255,214,107,${intensity * .8}))`
-            : "none";
+  $("bulbGlow").style.opacity = intensity;
 
-        $("bulbGlass").style.opacity = lightOn ? .2 + intensity * .8 : .2;
+  $("bulbGlass").style.opacity =
+   lightOn ? .2 + intensity * .8 : .2;
 
-        $("lightState").textContent = lightOn ? "● ON" : "○ OFF";
-        $("lightState").classList.toggle("active", lightOn);
+  $("lightState").textContent = lightOn ? "ON" : "OFF";
+  $("lightState").classList.toggle("on", lightOn);
 
-        $("lightButtonText").textContent =
-            lightOn ? "LIGHT IS ON · TAP TO TURN OFF" :
-                      "LIGHT IS OFF · TAP TO TURN ON";
+  $("lightToggle").textContent =
+   lightOn ? "TURN OFF" : "TURN ON";
 
-        $("lightSymbol").textContent = lightOn ? "✓" : "○";
-        $("lightToggle").classList.toggle("on", lightOn);
-        $("lightToggle").setAttribute(
-            "aria-label",
-            lightOn ? "Turn light off" : "Turn light on"
-        );
+  $("lightToggle").classList.toggle("on", lightOn);
 
-        $("lightSlider").disabled = !lightOn;
-        $("lightValue").textContent = light + "%";
-        $("lightWatts").textContent =
-            (lightOn ? LIGHT_WATTS * light / 100 : 0).toFixed(1) + " W";
+  $("lightSlider").disabled = !lightOn;
 
-        $("bulbVisual").classList.toggle("disabled-visual", !lightOn);
-        updateSliderTrack(lightSlider);
-    }
+  $("lightValue").textContent = light + "%";
+  $("lightRangeLabel").textContent = light + "%";
 
-    function updateFanVisual() {
-        const rotor = $("fanRotor");
+  $("lightWatts").textContent =
+   (lightOn ? LIGHT_WATTS * light / 100 : 0).toFixed(1) + " W";
 
-        const activeSpeed = fanOn ? fan : 0;
+  track($("lightSlider"));
+ }
 
-        if (activeSpeed > 0) {
-            const duration = 3.5 - (activeSpeed / 100) * 3.25;
-            rotor.style.animationDuration = duration + "s";
-            rotor.style.animationPlayState = "running";
-        } else {
-            rotor.style.animationPlayState = "paused";
-        }
+ function updateFan() {
 
-        $("fanState").textContent = fanOn ? "● ON" : "○ OFF";
-        $("fanState").classList.toggle("active", fanOn);
+  const rotor = $("fanRotor");
+  const speed = fanOn ? fan : 0;
 
-        $("fanButtonText").textContent =
-            fanOn ? "FAN IS ON · TAP TO TURN OFF" :
-                    "FAN IS OFF · TAP TO TURN ON";
+  if (speed > 0) {
+   const duration = 3.5 - speed / 100 * 3.25;
+   rotor.style.animationDuration = duration + "s";
+   rotor.style.animationPlayState = "running";
+  } else {
+   rotor.style.animationPlayState = "paused";
+  }
 
-        $("fanSymbol").textContent = fanOn ? "✓" : "○";
-        $("fanToggle").classList.toggle("on", fanOn);
-        $("fanToggle").setAttribute(
-            "aria-label",
-            fanOn ? "Turn fan off" : "Turn fan on"
-        );
+  $("fanState").textContent = fanOn ? "ON" : "OFF";
+  $("fanState").classList.toggle("on", fanOn);
 
-        $("fanSlider").disabled = !fanOn;
-        $("fanValue").textContent = fan + "%";
-        $("fanWatts").textContent =
-            (fanOn ? FAN_WATTS * fan / 100 : 0).toFixed(1) + " W";
+  $("fanToggle").textContent =
+   fanOn ? "TURN OFF" : "TURN ON";
 
-        $("fanVisual").classList.toggle("disabled-visual", !fanOn);
-        updateSliderTrack(fanSlider);
-    }
+  $("fanToggle").classList.toggle("on", fanOn);
 
-    function updateCalculations() {
-        const lightPower = lightOn ? LIGHT_WATTS * light / 100 : 0;
-        const fanPower = fanOn ? FAN_WATTS * fan / 100 : 0;
+  $("fanSlider").disabled = !fanOn;
 
-        const totalPower = lightPower + fanPower;
+  $("fanValue").textContent = fan + "%";
+  $("fanRangeLabel").textContent = fan + "%";
 
-        const lightEnergy =
-            lightPower * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+  $("fanWatts").textContent =
+   (fanOn ? FAN_WATTS * fan / 100 : 0).toFixed(1) + " W";
 
-        const fanEnergy =
-            fanPower * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+  track($("fanSlider"));
+ }
 
-        const monthlyEnergy = lightEnergy + fanEnergy;
+ function extraPower(d) {
+  return d.on ? d.watts : 0;
+ }
 
-        const lightCost = lightEnergy * RATE;
-        const fanCost = fanEnergy * RATE;
+ function renderExtras() {
 
-        const totalCost = monthlyEnergy * RATE;
+  $("extraDevices").innerHTML = "";
 
-        $("totalPower").textContent = totalPower.toFixed(1) + " W";
-        $("monthlyEnergy").textContent = monthlyEnergy.toFixed(2) + " kWh";
-        $("monthlyCost").textContent = money(totalCost);
+  extras.forEach(d => {
 
-        $("lightEnergy").textContent = lightEnergy.toFixed(2) + " kWh";
-        $("fanEnergy").textContent = fanEnergy.toFixed(2) + " kWh";
+   const card = document.createElement("div");
+   card.className = "extra-device";
 
-        $("lightCost").textContent = money(lightCost);
-        $("fanCost").textContent = money(fanCost);
+   const icon = document.createElement("span");
+   icon.className = "extra-icon";
+   icon.textContent = d.icon;
 
-        const lightShare = monthlyEnergy > 0
-            ? lightEnergy / monthlyEnergy * 100 : 0;
+   const info = document.createElement("div");
+   info.className = "extra-info";
 
-        const fanShare = monthlyEnergy > 0
-            ? fanEnergy / monthlyEnergy * 100 : 0;
+   const name = document.createElement("div");
+   name.className = "extra-name";
+   name.textContent = d.name;
 
-        $("lightBar").style.width = lightShare + "%";
-        $("fanBar").style.width = fanShare + "%";
-    }
+   const desc = document.createElement("div");
+   desc.className = "extra-desc";
 
-    function updateAll() {
-        updateLightVisual();
-        updateFanVisual();
-        updateCalculations();
-    }
+   desc.textContent = d.on
+    ? d.watts + " W · ON"
+    : "OFF · " + d.watts + " W max";
 
-    lightSlider.addEventListener("input", function () {
-        light = Number(this.value);
-        updateAll();
-    });
+   info.append(name, desc);
 
-    fanSlider.addEventListener("input", function () {
-        fan = Number(this.value);
-        updateAll();
-    });
+   const actions = document.createElement("div");
+   actions.className = "extra-actions";
 
-    $("lightToggle").addEventListener("click", function () {
-        lightOn = !lightOn;
-        updateAll();
-    });
+   const toggle = document.createElement("button");
 
-    $("fanToggle").addEventListener("click", function () {
-        fanOn = !fanOn;
-        updateAll();
-    });
+   toggle.className = "mini-toggle" + (d.on ? " on" : "");
+   toggle.textContent = d.on ? "ON" : "OFF";
 
+   toggle.addEventListener("click", () => {
+    d.on = !d.on;
+    renderExtras();
     updateAll();
+   });
+
+   const remove = document.createElement("button");
+   remove.className = "remove";
+   remove.textContent = "✕";
+
+   remove.addEventListener("click", () => {
+    extras = extras.filter(x => x.id !== d.id);
+    renderExtras();
+    updateAll();
+    toast(d.name + " removed");
+   });
+
+   actions.append(toggle, remove);
+   card.append(icon, info, actions);
+
+   $("extraDevices").append(card);
+
+  });
+
+  $("deviceCount").textContent =
+   (2 + extras.length) + " DEVICES";
+ }
+
+ function updateCalculations() {
+
+  const lp = lightOn ? LIGHT_WATTS * light / 100 : 0;
+  const fp = fanOn ? FAN_WATTS * fan / 100 : 0;
+
+  const extra = extras.reduce(
+   (sum, d) => sum + extraPower(d), 0
+  );
+
+  const total = lp + fp + extra;
+
+  const le = lp * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+  const fe = fp * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+  const ee = extra * HOURS_PER_DAY * DAYS_PER_MONTH / 1000;
+
+  const me = le + fe + ee;
+  const cost = me * RATE;
+
+  $("heroPower").textContent = total.toFixed(1) + " W";
+
+  const active =
+   Number(lightOn && lp > 0) +
+   Number(fanOn && fp > 0) +
+   extras.filter(d => d.on).length;
+
+  $("activeCount").textContent =
+   active + " appliances currently active";
+
+  $("totalPower").textContent = total.toFixed(1) + " W";
+  $("monthlyEnergy").textContent = fmt(me) + " kWh";
+  $("monthlyCost").textContent = money(cost);
+
+  $("lightEnergy").textContent = fmt(le) + " kWh";
+  $("fanEnergy").textContent = fmt(fe) + " kWh";
+
+  $("lightCost").textContent = money(le * RATE);
+  $("fanCost").textContent = money(fe * RATE);
+
+  $("lightBar").style.width =
+   (me ? le / me * 100 : 0) + "%";
+
+  $("fanBar").style.width =
+   (me ? fe / me * 100 : 0) + "%";
+
+  $("extraBreakdown").textContent = extras.length
+   ? extras.map(d => {
+      const e = d.on
+       ? d.watts * HOURS_PER_DAY * DAYS_PER_MONTH / 1000
+       : 0;
+      return d.name + ": " + fmt(e) +
+       " kWh · " + money(e * RATE);
+     }).join(" | ")
+   : "No additional appliances have been added.";
+ }
+
+ function updateAll() {
+  updateLight();
+  updateFan();
+  updateCalculations();
+ }
+
+ $("lightToggle").addEventListener("click", () => {
+  lightOn = !lightOn;
+  updateAll();
+ });
+
+ $("fanToggle").addEventListener("click", () => {
+  fanOn = !fanOn;
+  updateAll();
+ });
+
+ $("lightSlider").addEventListener("input", e => {
+  light = Number(e.target.value);
+  updateAll();
+ });
+
+ $("fanSlider").addEventListener("input", e => {
+  fan = Number(e.target.value);
+  updateAll();
+ });
+
+ // Add appliance popup
+
+ $("openAdd").addEventListener("click", () => {
+  $("modalBackdrop").classList.add("open");
+ });
+
+ $("closeModal").addEventListener("click", () => {
+  $("modalBackdrop").classList.remove("open");
+ });
+
+ $("modalBackdrop").addEventListener("click", e => {
+  if (e.target === $("modalBackdrop")) {
+   $("modalBackdrop").classList.remove("open");
+  }
+ });
+
+ const types = {
+
+  ac: {
+   name:"Smart AC",
+   icon:"❄️",
+   watts:1500
+  },
+
+  tv: {
+   name:"Smart TV",
+   icon:"📺",
+   watts:100
+  },
+
+  lock: {
+   name:"Smart Door Lock",
+   icon:"🔒",
+   watts:5
+  },
+
+  plug: {
+   name:"Smart Plug",
+   icon:"🔌",
+   watts:100
+  }
+
+ };
+
+ document.querySelectorAll(".option").forEach(btn => {
+
+  btn.addEventListener("click", () => {
+
+   const d = types[btn.dataset.type];
+
+   extras.push({
+    id:nextId++,
+    name:d.name,
+    icon:d.icon,
+    watts:d.watts,
+    on:true
+   });
+
+   renderExtras();
+   updateAll();
+
+   $("modalBackdrop").classList.remove("open");
+
+   toast(d.name + " added to your home");
+
+  });
+
+ });
+
+ // Bottom navigation
+
+ document.querySelectorAll(".nav-btn").forEach(btn => {
+
+  btn.addEventListener("click", () => {
+
+   document.querySelectorAll(".nav-btn").forEach(b => {
+    b.classList.toggle("active", b === btn);
+   });
+
+   document.querySelectorAll(".page").forEach(p => {
+    p.classList.toggle(
+     "active",
+     p.id === btn.dataset.page
+    );
+   });
+
+  });
+
+ });
+
+ // Smartphone clock
+
+ function clock() {
+  const d = new Date();
+
+  $("clock").textContent =
+   d.toLocaleTimeString([], {
+    hour:"2-digit",
+    minute:"2-digit",
+    hour12:false
+   });
+ }
+
+ clock();
+ setInterval(clock, 30000);
+
+ renderExtras();
+ updateAll();
+
 })();
 </script>
 
@@ -1016,6 +1602,6 @@ body {
 
 components.html(
     dashboard,
-    height=1800,
+    height=1150,
     scrolling=True
 )
